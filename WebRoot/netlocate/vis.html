@@ -1,0 +1,300 @@
+
+<!doctype html>
+<head>
+<meta charset="UTF-8">
+    <link type="text/css" rel="stylesheet" href="css/jquery-ui.css">
+    <link type="text/css" rel="stylesheet" href="css/graph.css">
+    <link type="text/css" rel="stylesheet" href="css/detail.css">
+    <link type="text/css" rel="stylesheet" href="css/legend.css">
+    <link type="text/css" rel="stylesheet" href="css/extensions.css?v=2">
+    <title>AP数据展示</title>
+</head>
+<body>
+
+<div id="content">
+
+    <form id="side_panel">
+        <h1>AP数据展示</h1>
+
+        <p>选择一个采集客户端</p>
+        <select id="phoneselection"></select>
+
+        <section><div id="legend"></div></section>
+        <section>
+            <div id="renderer_form" class="toggler">
+                <input type="radio" name="renderer" id="area" value="area" checked>
+                <label for="area">area</label>
+                <input type="radio" name="renderer" id="bar" value="bar">
+                <label for="bar">bar</label>
+                <input type="radio" name="renderer" id="line" value="line">
+                <label for="line">line</label>
+                <input type="radio" name="renderer" id="scatter" value="scatterplot">
+                <label for="scatter">scatter</label>
+            </div>
+        </section>
+        <section>
+            <div id="offset_form">
+                <label for="stack">
+                    <input type="radio" name="offset" id="stack" value="zero" checked>
+                    <span>stack</span>
+                </label>
+                <label for="stream">
+                    <input type="radio" name="offset" id="stream" value="wiggle">
+                    <span>stream</span>
+                </label>
+                <label for="pct">
+                    <input type="radio" name="offset" id="pct" value="expand">
+                    <span>pct</span>
+                </label>
+                <label for="value">
+                    <input type="radio" name="offset" id="value" value="value">
+                    <span>value</span>
+                </label>
+            </div>
+            <div id="interpolation_form">
+                <label for="cardinal">
+                    <input type="radio" name="interpolation" id="cardinal" value="cardinal" checked>
+                    <span>cardinal</span>
+                </label>
+                <label for="linear">
+                    <input type="radio" name="interpolation" id="linear" value="linear">
+                    <span>linear</span>
+                </label>
+                <label for="step">
+                    <input type="radio" name="interpolation" id="step" value="step-after">
+                    <span>step</span>
+                </label>
+            </div>
+        </section>
+        <section>
+            <h6>Smoothing</h6>
+            <div id="smoother"></div>
+        </section>
+        <section></section>
+    </form>
+
+    <div id="chart_container">
+        <div id="chart"></div>
+        <div id="timeline"></div>
+        <div id="preview"></div>
+    </div>
+</div>
+
+<script src="js/d3.v3.js"></script>
+
+<script src="js/jquery.min.js"></script>
+<script>
+    jQuery.noConflict();
+</script>
+
+<script src="js/jquery-ui.min.js"></script>
+
+<script src="js/Rickshaw.js"></script>
+<script src="js/Rickshaw.Class.js"></script>
+<script src="js/Rickshaw.Compat.ClassList.js"></script>
+<script src="js/Rickshaw.Graph.js"></script>
+<script src="js/Rickshaw.Graph.Renderer.js"></script>
+<script src="js/Rickshaw.Graph.Renderer.Area.js"></script>
+<script src="js/Rickshaw.Graph.Renderer.Line.js"></script>
+<script src="js/Rickshaw.Graph.Renderer.Bar.js"></script>
+<script src="js/Rickshaw.Graph.Renderer.ScatterPlot.js"></script>
+<script src="js/Rickshaw.Graph.Renderer.Stack.js"></script>
+<script src="js/Rickshaw.Graph.RangeSlider.js"></script>
+<script src="js/Rickshaw.Graph.RangeSlider.Preview.js"></script>
+<script src="js/Rickshaw.Graph.HoverDetail.js"></script>
+<script src="js/Rickshaw.Graph.Annotate.js"></script>
+<script src="js/Rickshaw.Graph.Legend.js"></script>
+<script src="js/Rickshaw.Graph.Axis.Time.js"></script>
+<script src="js/Rickshaw.Graph.Behavior.Series.Toggle.js"></script>
+<script src="js/Rickshaw.Graph.Behavior.Series.Order.js"></script>
+<script src="js/Rickshaw.Graph.Behavior.Series.Highlight.js"></script>
+<script src="js/Rickshaw.Graph.Smoother.js"></script>
+<script src="js/Rickshaw.Fixtures.Time.js"></script>
+<script src="js/Rickshaw.Fixtures.Time.Local.js"></script>
+<script src="js/Rickshaw.Fixtures.Number.js"></script>
+<script src="js/Rickshaw.Fixtures.RandomData.js"></script>
+<script src="js/Rickshaw.Fixtures.Color.js"></script>
+<script src="js/Rickshaw.Color.Palette.js"></script>
+<script src="js/Rickshaw.Graph.Axis.Y.js"></script>
+
+<script src="js/extensions.js"></script>
+
+<script>
+    var getmacs_endpoint = '/lbsshow/netlocate/getmacs';
+    var getdata_endpoint = '/lbsshow/netlocate/apdata-statistic';
+
+    jQuery.ajax({
+            type: "GET",
+            contentType: "application/json; charset=utf-8",
+            url: getmacs_endpoint,
+            dataType: 'json',
+            async: true,
+            data: "{}",
+            success:function(result){
+                var options = jQuery("#phoneselection");
+                var data = result['data'];
+                for(var i in data){
+                	options.append(jQuery("<option />").val(data[i]).text(data[i]));
+                }
+                /*
+                jQuery.each(data['data'], function () {
+                	console.log(this.value);
+                    options.append(jQuery("<option />").val(this.value).text(this.text));
+                });
+                */
+            },
+            error: function (result) {}
+    })
+
+
+    jQuery("#phoneselection").on('change', function() {
+        jQuery.ajax({
+                type: "GET",
+                contentType: "application/json; charset=utf-8",
+                url: getdata_endpoint,
+                dataType: 'json',
+                async: true,
+                data: {'buildingCode': 'beijingchildrenhospital', 'mac': this.value,'startTime':1470617984,'endTime':1470637897},
+                success: function (seriesData) {
+                	//console.log(JSON.stringify(seriesData['data']));
+                    draw(seriesData['data']);
+                },
+                error: function (result) {}
+        })
+    });
+
+
+
+    function draw(seriesData) {
+        var palette = new Rickshaw.Color.Palette();
+        /*
+        var userdata = [];
+        for (var i = seriesData.length - 1; i >= 0; i--) {
+            seriesData[i]['color'] = palette.color()
+            userdata.push(seriesData[i]);
+        }
+		*/
+		var userdata = [];
+		for (var i = seriesData.length - 1; i >= 0; i--) {
+		    seriesData[i]['color'] = palette.color()
+		    for (var j = seriesData[i]['data'].length - 1; j >= 0; j--) {
+		        seriesData[i]['data'][j]['y'] = i + 1;
+		    }
+		    userdata.push(seriesData[i]);
+		}
+        jQuery('#chart').empty();
+        jQuery('#legend').empty();
+        var graph = new Rickshaw.Graph( {
+            element: document.getElementById("chart"),
+            width: 1200,
+            height: 800,
+            //min: -110,
+            renderer: 'scatterplot',
+            stroke: true,
+            preserve: true,
+            series: userdata
+        } );
+
+        graph.render();
+
+        var preview = new Rickshaw.Graph.RangeSlider( {
+            graph: graph,
+            element: document.getElementById('preview'),
+        } );
+
+        var hoverDetail = new Rickshaw.Graph.HoverDetail( {
+            graph: graph,
+            xFormatter: function(x) {
+                return new Date(x * 1000).toString();
+            }
+        } );
+
+        var annotator = new Rickshaw.Graph.Annotate( {
+            graph: graph,
+            element: document.getElementById('timeline')
+        } );
+
+        var legend = new Rickshaw.Graph.Legend( {
+            graph: graph,
+            element: document.getElementById('legend')
+
+        } );
+
+        var shelving = new Rickshaw.Graph.Behavior.Series.Toggle( {
+            graph: graph,
+            legend: legend
+        } );
+
+        var order = new Rickshaw.Graph.Behavior.Series.Order( {
+            graph: graph,
+            legend: legend
+        } );
+
+        var highlighter = new Rickshaw.Graph.Behavior.Series.Highlight( {
+            graph: graph,
+            legend: legend
+        } );
+
+        var smoother = new Rickshaw.Graph.Smoother( {
+            graph: graph,
+            element: document.querySelector('#smoother')
+        } );
+
+        var ticksTreatment = 'glow';
+
+        var xAxis = new Rickshaw.Graph.Axis.Time( {
+            graph: graph,
+            ticksTreatment: ticksTreatment,
+            timeFixture: new Rickshaw.Fixtures.Time.Local()
+        } );
+
+        xAxis.render();
+
+        var yAxis = new Rickshaw.Graph.Axis.Y( {
+            graph: graph,
+            tickFormat: Rickshaw.Fixtures.Number.formatKMBT,
+            ticksTreatment: ticksTreatment
+        } );
+
+        yAxis.render();
+
+
+        var controls = new RenderControls( {
+            element: document.querySelector('form'),
+            graph: graph
+        } );
+
+        // add some data every so often
+
+        var messages = [
+            "Changed home page welcome message",
+            "Minified JS and CSS",
+            "Changed button color from blue to green",
+            "Refactored SQL query to use indexed columns",
+            "Added additional logging for debugging",
+            "Fixed typo",
+            "Rewrite conditional logic for clarity",
+            "Added documentation for new methods"
+        ];
+
+        function addAnnotation(force) {
+            if (messages.length > 0 && (force || Math.random() >= 0.95)) {
+                annotator.add(seriesData[2][seriesData[2].length-1].x, messages.shift());
+                annotator.update();
+            }
+        }
+
+        addAnnotation(true);
+        setTimeout( function() { setInterval( addAnnotation, 6000 ) }, 6000 );
+
+        var previewXAxis = new Rickshaw.Graph.Axis.Time({
+            graph: preview.previews[0],
+            timeFixture: new Rickshaw.Fixtures.Time.Local(),
+            ticksTreatment: ticksTreatment
+        });
+
+        previewXAxis.render();
+    }
+</script>
+
+</body>

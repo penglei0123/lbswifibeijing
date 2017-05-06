@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Context>
+	<Resource 
+		type="javax.sql.DataSource" 
+		name="jdbc/DBPool"
+		factory="org.apache.tomcat.jdbc.pool.DataSourceFactory"
+		driverClassName="com.mysql.jdbc.Driver" 
+		url="jdbc:mysql://localhost:3306/zgc_lbs?useUnicode=true&amp;characterEncoding=utf-8&amp;autoReconnect=true"
+		auth="Container"
+		testOnBorrow="true"
+		testWhileIdle="true"
+		validationQuery="select 1"
+		testOnReturn="true"
+		cacheState="false"
+		username="root" 
+		password="wifibeijing"
+		removeAbandoned="true"
+		initialSize="10"
+		maxActive="100" 
+		maxIdle="50" 
+		maxWait="30000"
+		maxIdleTime="1800"
+		minIdle="10" 
+		suspectTimeout="60"
+		timeBetweenEvictionRunsMillis="30000" 
+		minEvictableIdleTimeMillis="60000" />
+</Context>
+           
