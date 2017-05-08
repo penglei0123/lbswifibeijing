@@ -55,7 +55,7 @@
 		<error-code>404</error-code>
 		<location>/error.jsp</location>
 	</error-page>
-<!--  	<security-constraint>
+	<security-constraint>
 		<web-resource-collection>
 			<web-resource-name>jd</web-resource-name>
 			<url-pattern>/*</url-pattern>
@@ -63,7 +63,7 @@
 		<auth-constraint>
 			<role-name>jd</role-name>
 		</auth-constraint>
-	</security-constraint>   -->
+	</security-constraint>
 	<login-config>
 		<auth-method>BASIC</auth-method>
 		<realm-name>GenePoint User Check</realm-name>

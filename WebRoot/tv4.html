@@ -1,0 +1,32 @@
+<HTML>
+<HEAD>
+    <TITLE>My Web</TITLE>
+</HEAD>
+<BODY>
+    
+    <object id="UIOCX" class="UIOCX" type="applicatin/x-firebreath" width="" height="" style="width: 420px; height: 328px;">
+        <param name="onload" value="pluginLoaded">
+    </object>
+
+                    
+    <script>
+    
+    var playerObj = document.getElementById('UIOCX');
+     var jsonstr='{"ip":"101.96.143.27","port":2100,"user":"admin","passwd":"admin","path":"av/高清图像/东升镇派出所/语言大学社区警务工作室","type":1,"displayMode":0}';
+    var res = playerObj.PlayEx2(jsonstr, 0, function(index, result, param) {
+       
+                if (result < 0) {
+                    
+                }
+                if (result == 0) {
+                    console.log('播放成功');
+                }
+            }, 0, function() {
+                
+            }, 0, function() {}, 0);
+            if (res < 0) {
+                console.log("play-error-code:", res);
+            }
+    </script>
+</BODY>
+</HTML>
