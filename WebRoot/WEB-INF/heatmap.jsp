@@ -71,7 +71,7 @@ $(function(){
 	$("#"+page).attr("class","current");
 	$('#btnSearchHistoryHeatmap').click(function() {
 		var duration = $('.select_duration option:selected').val();
-		var building = "zhonggauncun";
+		var building = "110111";
 		var floor = "F1";
 		var data = {};
 		if (duration == '0') {

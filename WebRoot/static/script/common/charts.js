@@ -79,7 +79,7 @@ function showRealtimeCustomerCount() {
 				name : '实时人流量'
 			} ],
 			min : 0,
-			max : 8000
+			max : 15000
 		} ]
 	};
 

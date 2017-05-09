@@ -234,6 +234,7 @@ function getTopKMAC() {
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
         data: {
             "action": "get_topk_mac",
+             "building":"110111",
         },
         success: function (result) {
             if (result.status !== 1) {

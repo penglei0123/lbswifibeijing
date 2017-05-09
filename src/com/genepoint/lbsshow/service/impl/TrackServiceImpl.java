@@ -605,15 +605,17 @@ public class TrackServiceImpl implements TrackService {
 //	 获取TOPKmac
  	public void getTopKMAC(HttpServletRequest request, JSONObject result) {
  		try {
- 			String data = request.getParameter("data");
-			if (data == null || data.equals("")) {
-				result.put("status", Status.STATUS_FORM_ERROR);
-				result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR));
-				Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR));
-				return;
-			}
-			JSONObject json = new JSONObject(data);
-			String building = json.getString("building");
+// 			String data = request.getParameter("data");
+//			if (data == null || data.equals("")) {
+//				result.put("status", Status.STATUS_FORM_ERROR);
+//				result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR));
+//				Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR));
+//				return;
+//			}
+//			Log.info(this.getClass(),"data"+data);
+//			JSONObject json = new JSONObject(data);
+			String building = request.getParameter("building");
+			Log.info(this.getClass(),"building:"+building);
 			Jedis redis = new Jedis(Configs.REDIS_HOST, Configs.REDIS_PORT);
 			redis.select(Configs.REDIS_DB_INDEX);
 			String redisKey = building + "_mac_topk_sortset";
