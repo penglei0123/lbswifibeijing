@@ -5,9 +5,4 @@
 		<class>com.genepoint.converter.TZConverter</class>
 		<description>通州国泰坐标转换插件</description>
 	</converter>
-		<converter>
-		<building>120746</building>
-		<class>com.genepoint.converter.TZConverter</class>
-		<description>通州国泰坐标转换插件</description>
-	</converter>
 </converters>

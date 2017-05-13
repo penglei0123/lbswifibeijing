@@ -113,7 +113,7 @@ function showRealtimeCustomerCount() {
 				name : '实时客流量'
 			} ],
 			min:0,
-			max:8000
+			max:2500
 		} ]
 	};
 	

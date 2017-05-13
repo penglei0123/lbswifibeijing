@@ -14,7 +14,7 @@
 		cacheState="false"
 		removeAbandoned="true"
 		username="root" 
-		password="wiwide"
+		password="zhongke"
 		initialSize="10"
 		maxActive="15" 
 		maxIdle="10" 

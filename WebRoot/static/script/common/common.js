@@ -1302,7 +1302,7 @@ function format2Date(uData){
 }
 
 //获取ap的位置，显示在地图上
-function getAllApPosition(requestData,width,height){
+function getAllApPosition(requestData,mapWidth,mapHeight,imgMarker,mapScale){
 	$.ajax({
 		type : "GET",
 		dataType : "json",
@@ -1313,18 +1313,21 @@ function getAllApPosition(requestData,width,height){
 			"data" : JSON.stringify(requestData),
 		},
 		success : function(result){
+		//	console.log(JSON.stringify(result));
 			if (result.status !== 1){
 				console.log(result.message);
 			} else {
+			//	$('#'+containerId).empty();
 				var data = result.data;
 				var index = 0;
 				var imgs = [];
 				for ( var i in data){
+				//	console.log(i)
 					var canvas = document.getElementById('canvas_' + i);
 					var context = canvas.getContext('2d');
 					var canvasbuffer = document.createElement('canvas');
 					var contextbuffer = canvasbuffer.getContext('2d');
-					drawApPosition(canvas, context, canvasbuffer, contextbuffer, i, data[i],width,height);
+					drawApPosition(canvas, context, canvasbuffer, contextbuffer, i, data[i],mapWidth,mapHeight,imgMarker,mapScale);
 				}
 			}
 		},
@@ -1333,46 +1336,31 @@ function getAllApPosition(requestData,width,height){
 					}
 	});
 }
-function drawApPosition(canvas, context, canvasbuffer, contextbuffer, floor, positions,width,height){
-	/*var img = new Image();
-	img.src = basePath + "/static/map/" + building + "_" + floor + ".jpg"// 设置地图
-	img.onload = function(){*/
-		/*canvasbuffer.width = img.width * canvasScale;
-		canvasbuffer.height = img.height * canvasScale;
-		canvas.width = img.width * canvasScale;
-		canvas.height = img.height * canvasScale;*/
-		canvasbuffer.width = width * canvasScale;
-		canvasbuffer.height = height * canvasScale;
-		canvas.width = width * canvasScale;
-		canvas.height = height * canvasScale;
-	//	context.drawImage(img, 0, 0, width * canvasScale, height* canvasScale);
-		drawimgMarker(canvas, context, canvasbuffer, contextbuffer, floor, positions);
-//	}
+function drawApPosition(canvas, context, canvasbuffer, contextbuffer, floor, positions,mapWidth,mapHeight,imgMarker,mapScale){
+	    canvasScale=mapScale[floor];
+    	canvas.width = mapWidth[floor] ;
+		canvas.height = mapHeight[floor] ;
+		canvasbuffer.width = mapWidth[floor];
+		canvasbuffer.height = mapHeight[floor];
+		drawimgMarker(canvas, context, canvasbuffer, contextbuffer, floor, positions,imgMarker);
 }
-function drawimgMarker(canvas, context, canvasbuffer, contextbuffer, floor, positions){
-	imgMarker2 = new Image();
-	imgMarker2.src = basePath + "/static/images/marker.png"// 设置覆盖物
-	imgMarker2.onload = function(){
+function drawimgMarker(canvas, context, canvasbuffer, contextbuffer, floor, positions,imgMarker){	    
 		for ( var j in positions){
-			contextbuffer.drawImage(imgMarker2, JSON.stringify(positions[j].x)
-							* canvasScale, JSON.stringify(positions[j].y)
-							* canvasScale);
+			contextbuffer.drawImage(imgMarker, JSON.stringify(positions[j].x)* canvasScale, JSON.stringify(positions[j].y)* canvasScale);
 			// ap扫描到的手机数量
 			var reg = new RegExp('"', "g");
 			var str = JSON.stringify(positions[j].mac);
 			str = str.replace(reg, "");
-			contextbuffer.font = "18px '黑体'";
-			contextbuffer.fillStyle = '#000';
-			contextbuffer.fillText(JSON.stringify(positions[j].count), JSON.stringify(positions[j].x)
-					* canvasScale - 10, JSON.stringify(positions[j].y)
+			contextbuffer.font = "20px '黑体'";
+			contextbuffer.fillStyle = '#0000FF';
+			contextbuffer.fillText(JSON.stringify(positions[j].count), JSON.stringify(positions[j].x) * canvasScale - 10, JSON.stringify(positions[j].y)
 					* canvasScale);
 			contextbuffer.fillText(str, JSON.stringify(positions[j].x - 15)
 					* canvasScale, JSON.stringify(positions[j].y + 25)
 					* canvasScale);
 			//图标缩放 context.scale(2,2);
-			context.drawImage(canvasbuffer, 0, 0);
 		}
-	}
+		context.drawImage(canvasbuffer, 0, 0);
 }
 
 

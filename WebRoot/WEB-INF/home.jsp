@@ -53,7 +53,7 @@ $(function(){
 	setTimeout(showDynamicLine,1000);
 	//加载各楼层热力图
 	for(var i in floorList)
-		$('.heatmap_list').append('<div class="heatmap" id="heatmap_'+floorList[i]+'"><p>'+floorList[i]+'热力图</p></div><hr>');
+		$('.heatmap_list').append('<p>'+floorList[i]+'热力图</p><div class="heatmap" id="heatmap_'+floorList[i]+'"></div><hr>');
 	loadAllHeatmap();
 });
 </script>
