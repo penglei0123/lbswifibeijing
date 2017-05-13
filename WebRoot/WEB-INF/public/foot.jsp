@@ -6,6 +6,7 @@ if(user.equals("wifibeijing")){
 <%
 }else{
 %>
+
 <footer>
   <hr>
    <p align="center">中科劲点(北京)科技有限公司  版权所有  地址：北京市海淀区科学院南路10号(灵智楼)   京ICP备15047372号-1</p>
@@ -26,18 +27,23 @@ if(user.equals("wifibeijing")){
 <script src="<%=basePath%>static/assets/js/amazeui.min.js"></script>
 <!--<![endif]-->
 <script src="<%=basePath%>static/assets/js/app.js"></script>
-<script src="<%=basePath%>/static/script/layer2/layer/layer.js"></script>
+<script src="<%=basePath%>static/script/layer2/layer/layer.js"></script>
 <!-- layer扩展插件 -->
-<script src="<%=basePath%>/static/script/layer2/layer/extend/layer.ext.js"></script>
+<script src="<%=basePath%>static/script/layer2/layer/extend/layer.ext.js"></script>
 <!-- 日期选择插件 -->
-<script src="<%=basePath%>/static/script/laydate/laydate.js"></script>
+<script src="<%=basePath%>static/script/laydate/laydate.js"></script>
 
-<script src="<%=basePath%>/static/script/common/common.js"></script>
-
+<script src="<%=basePath%>static/script/common/common.js"></script>
+<!-- 热力图插件 -->
+<script src="<%=basePath%>static/script/heatmap/heatmap.min.js"></script>
 <!-- 可视化插件 -->
-<script src="<%=basePath%>/static/script/d3/d3.min.js"></script>
-<script src="<%=basePath%>/static/script/echarts/echarts.min.js"></script>
+<script src="<%=basePath%>static/script/d3/d3.min.js"></script>
+<script src="<%=basePath%>static/script/echarts/echarts.min.js"></script>
 
-<script src="<%=basePath%>/static/script/common/table_sort.js"></script>
+<script src="<%=basePath%>static/script/common/algorithms.js"></script>
+<script src="<%=basePath%>static/script/common/draw_2d.js"></script>
+
+<script src="<%=basePath%>static/script/common/table_sort.js"></script>
+
 </body>
 </html>

@@ -17,9 +17,7 @@ import javax.servlet.http.HttpServletRequest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import redis.clients.jedis.Jedis;
-import redis.clients.jedis.Tuple;
-
+import com.alibaba.fastjson.JSON;
 import com.genepoint.custom.Action;
 import com.genepoint.custom.Configs;
 import com.genepoint.custom.Status;
@@ -27,6 +25,9 @@ import com.genepoint.dao.DBUtil;
 import com.genepoint.lbsshow.service.TrackService;
 import com.genepoint.tool.Function;
 import com.genepoint.tool.Log;
+import com.genepoint.tool.PositionConvertUtil;
+
+import redis.clients.jedis.Jedis;
 
 public class TrackServiceImpl implements TrackService {
 
@@ -36,7 +37,6 @@ public class TrackServiceImpl implements TrackService {
 	private SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm");
 	private SimpleDateFormat sdfDate = new SimpleDateFormat("yyyyMMdd");
 	public static List<HotPosition> hotPositions = new ArrayList<HotPosition>();
-	private static Set<Tuple> tuples = null;
 
 	@Override
 	public void getData(HttpServletRequest request, JSONObject result) {
@@ -51,7 +51,7 @@ public class TrackServiceImpl implements TrackService {
 		case Action.ACTION_GET_TRACK_REALTIME:
 			getRealtimeData(request, result);
 			break;
-		case Action.ACTION_GET_TRACK_HISTORY://单人轨迹
+		case Action.ACTION_GET_TRACK_HISTORY:
 			getHistoryTrack(request, result);
 			break;
 		case Action.ACTION_GET_TRACK_HISTORY_DETAIL:
@@ -65,10 +65,20 @@ public class TrackServiceImpl implements TrackService {
 			break;
 		case Action.ACTION_GET_TOPK_MAC:
 			getTopKMAC(request, result);
-//			getRealtimeTopKMAC(request, result);
-//			if ( tuples.isEmpty() && tuples.size() == 0) {
-//				getTopKMAC(request, result);
-//			}
+			break;
+		case Action.ACTION_GET_MAP_PATH_FORBIDDEN_REGION:
+			getMapPath(request, result);
+		case Action.ACTION_GET_HISTORY_PERSON_TRACK:
+			getHistoryPersonTrack(request,result);
+			boolean success = false;
+			if (result.getInt("status") == Status.STATUS_SUCCESS) {
+				success = true;
+			}
+			getForbiddenList(request, result);
+			if (success) {
+				result.put("status", Status.STATUS_SUCCESS);
+				result.put("message", Status.getMessage(Status.STATUS_SUCCESS));
+			}
 			break;
 		default:
 			Log.warn(this.getClass(), Status.getMessage(Status.STATUS_UNKNOWN_ACTION));
@@ -118,7 +128,7 @@ public class TrackServiceImpl implements TrackService {
 			dbConn = DBUtil.getConnection();
 			// 确定查询的表名
 			String table = "track_20160819";
-			String sqlStr = "select mac,count(mac) as size from " + table + " where building=? group by mac order by size desc";
+			String sqlStr = "select mac,count(mac) as size from `" + table + "` where building=? group by mac order by size desc";
 			pstmt = dbConn.prepareStatement(sqlStr);
 			pstmt.setString(1, building);
 			rs = pstmt.executeQuery();
@@ -179,8 +189,12 @@ public class TrackServiceImpl implements TrackService {
 			if (posList != null) {
 				for (String pos : posList) {
 					JSONObject obj = new JSONObject(pos);
-					if (obj.getString("building").equals(building))
+					if (obj.getString("building").equals(building)) {
+						double[] newPos = PositionConvertUtil.convert(building, obj.getDouble("corx"), obj.getDouble("cory"));
+						obj.put("corx", newPos[0]);
+						obj.put("cory", newPos[1]);
 						arr.put(obj);
+					}
 				}
 			}
 			if (arr.length() > 0) {
@@ -204,6 +218,7 @@ public class TrackServiceImpl implements TrackService {
 		try {
 			String action = request.getParameter("action");
 			String data = request.getParameter("data");
+			System.out.println(data+"-------"+action);
 			if (data == null || data.equals("")) {
 				result.put("status", Status.STATUS_FORM_ERROR);
 				result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR));
@@ -223,6 +238,7 @@ public class TrackServiceImpl implements TrackService {
 				timeNow = System.currentTimeMillis();
 				timeTail = timeNow - duration * 1000L;
 			}
+			System.out.println("开始时间"+timeTail+"结束时间"+timeNow);
 			if (Configs.CACHE_ENABLE) {
 				String key = action + "_" + building + "_" + floor + "_" + mac + "_" + timeTail + "_" + timeNow;
 				Jedis redis = new Jedis(Configs.REDIS_HOST, Configs.REDIS_PORT);
@@ -239,11 +255,12 @@ public class TrackServiceImpl implements TrackService {
 			}
 			dbConn = DBUtil.getConnection();
 			// 判断时间跨度为几天（确定查询的表名）
-			List<String> tableList = Function.parseTablenameList(dbConn, "track_"+ building + "_", timeNow, timeTail);
+			List<String> tableList = Function.parseTablenameList(dbConn, "track_" + building + "_", timeNow, timeTail);
+			System.out.println("tableList"+tableList.size());
 			// 对用户轨迹按照楼层划分，生成列表返回
 			JSONArray arr = new JSONArray();
 			for (String table : tableList) {
-				String sqlStr = "select bd09_x,bd09_y,time from " + table + " where floor=? and mac=? and time between ? and ? order by time asc";
+				String sqlStr = "select corx,cory,time from `" + table + "` where floor=? and mac=? and time between ? and ? order by time asc";
 				pstmt = dbConn.prepareStatement(sqlStr);
 				// pstmt.setString(1, building);
 				pstmt.setString(1, floor);
@@ -254,23 +271,34 @@ public class TrackServiceImpl implements TrackService {
 				long lastTime = 0;
 				JSONArray oneTrack = new JSONArray();
 				while (rs.next()) {
-					double x =  rs.getDouble(1);
-					double y =  rs.getDouble(2);
+					System.out.println("rs222:"+rs.getDouble(1));
+					double x = rs.getDouble(1);// 用double以兼容经纬度和像素
+					double y = rs.getDouble(2);
+					double[] newPos = PositionConvertUtil.convert(building, x, y);
 					long time = rs.getLong(3);
 					if (lastTime == 0) {
 						lastTime = time;
 					}
+
+					JSONObject obj = new JSONObject();
+					obj.put("x", newPos[0]);
+					obj.put("y", newPos[1]);
+					obj.put("time", time);
+					oneTrack.put(obj);
+					/**
+					 * 功能暂时取消
+					 */
 					// 连续两次定位结果之间相差超过10分钟则认为该段轨迹结束
-					if ((time - lastTime) > 1000 * 60 * 10) {
-						arr.put(oneTrack);
-						oneTrack = new JSONArray();
-					} else {
-						JSONObject obj = new JSONObject();
-						obj.put("x", x);
-						obj.put("y", y);
-						obj.put("time", time);
-						oneTrack.put(obj);
-					}
+					// if ((time - lastTime) > 1000 * 60 * 10) {
+					// arr.put(oneTrack);
+					// oneTrack = new JSONArray();
+					// } else {
+					// JSONObject obj = new JSONObject();
+					// obj.put("x", x);
+					// obj.put("y", y);
+					// obj.put("time", time);
+					// oneTrack.put(obj);
+					// }
 					lastTime = time;
 				}
 				rs.close();
@@ -279,12 +307,210 @@ public class TrackServiceImpl implements TrackService {
 					arr.put(oneTrack);
 			}
 			dbConn.close();
-//			System.out.println("track query finish");
 			if (arr.length() > 0) {
 				result.put("status", Status.STATUS_SUCCESS);
 				result.put("data", arr);
+				result.put("timeStart", timeTail);
+				result.put("timeEnd", timeNow);
+	           System.out.println("result1:"+result);
 				if (Configs.CACHE_ENABLE) {
-					String key = action + "_" + building + "_" + floor + "_" + mac + "_" + timeTail + "_" + timeNow;
+					String key = action + "_" + building + "_" + floor + "_" +  mac + "_" + timeTail + "_" + timeNow;
+					Jedis redis = new Jedis(Configs.REDIS_HOST, Configs.REDIS_PORT);
+					redis.select(Configs.REDIS_DB_INDEX);
+					redis.set(key, arr.toString());
+					redis.expire(key, Configs.CACHE_TIMEOUT);
+					redis.close();
+				}
+				Log.info(this.getClass(), Status.getMessage(Status.STATUS_SUCCESS));
+			} else {
+				result.put("status", Status.STATUS_EMPTY);
+				result.put("message", Status.getMessage(Status.STATUS_EMPTY));
+				Log.info(this.getClass(), Status.getMessage(Status.STATUS_EMPTY));
+			}
+		} catch (Exception e) {
+			result.put("status", Status.STATUS_SYSTEM_ERROR);
+			result.put("message", Status.getMessage(Status.STATUS_SYSTEM_ERROR) + "：" + e.getMessage());
+			Log.trace(this.getClass(), e);
+			return;
+		} finally {
+			DBUtil.release(rs, pstmt, dbConn);
+		}
+	}
+
+	public void getHistoryPersonTrack(HttpServletRequest request, JSONObject result) {
+		try {
+			String action = request.getParameter("action");
+			String data = request.getParameter("data");
+	//		System.out.println(data+"......"+action);
+			if (data == null || data.equals("")) {
+				result.put("status", Status.STATUS_FORM_ERROR);
+				result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR));
+				Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR));
+				System.out.println("error");
+				return;
+			}
+			JSONObject json = new JSONObject(data);
+			String building = json.getString("building");
+			String mac = json.getString("mac");
+			long duration = json.getLong("duration");
+			long timeNow, timeTail;
+			double timeDuration ;
+			long endTime = 0,startTime=0;
+			long allTimeDuration = 0;
+			if (duration == -1) {
+				timeNow = json.getLong("duration_end") * 1000L;
+				timeTail = json.getLong("duration_start") * 1000L;
+			} else {
+				timeNow = System.currentTimeMillis();
+				timeTail = timeNow - duration * 1000L;
+			}
+			System.out.println("结束时间"+timeNow+"开始时间"+timeTail);
+			/*if (Configs.CACHE_ENABLE) {
+				String key = action + "_" + building + "_" + mac + "_" + timeTail + "_" + timeNow;
+				Jedis redis = new Jedis(Configs.REDIS_HOST, Configs.REDIS_PORT);
+				redis.select(Configs.REDIS_DB_INDEX);
+				String value = redis.get(key);
+				redis.close();
+				if (value != null) {
+					JSONArray arr = new JSONArray(value);
+					result.put("status", Status.STATUS_SUCCESS);
+					result.put("data", arr);
+					Log.info(this.getClass(), Status.getMessage(Status.STATUS_SUCCESS));
+					return;
+				}
+			}*/
+			dbConn = DBUtil.getConnection();
+			// 判断时间跨度为几天（确定查询的表名）
+			List<String> tableListPerson = Function.parseTablenameList(dbConn, "track_" + building + "_", timeNow, timeTail);
+		//	System.out.println("track_" + building + "_"+ timeNow+timeTail);
+		//	System.out.println("tableListPerson"+tableListPerson.toString());
+			// 对用户轨迹按照楼层划分，生成列表返回
+			JSONArray arr = new JSONArray();
+			JSONArray floorTime=new JSONArray();
+			for (String table : tableListPerson) {
+		//		System.out.println("tableList"+table);
+				String sqlStr = "select corx,cory,time,floor from `" + table + "` where mac=? and time between ? and ? order by time asc";
+				pstmt = dbConn.prepareStatement(sqlStr);
+				// pstmt.setString(1, building);
+				pstmt.setString(1, mac);
+				pstmt.setLong(2, timeTail);
+				pstmt.setLong(3, timeNow);
+				rs = pstmt.executeQuery();
+				boolean firstFlag=true;
+				long floorStartTime = 0;
+				long floorEndTime = 0;
+				String lastFloor = null;
+				JSONArray oneTrack = new JSONArray();
+				boolean flagNull = false;
+				while (rs.next()) {
+					flagNull = true ;
+					double x = rs.getDouble(1);// 用double以兼容经纬度和像素
+					double y = rs.getDouble(2);
+					double[] newPos = PositionConvertUtil.convert(building, x, y);
+					long time = rs.getLong(3);
+					endTime = time ;
+					String floor = rs.getString(4);
+					if(firstFlag){
+						floorStartTime=time;
+						if(floorStartTime>timeTail){
+							floorStartTime = time-1000;
+						}
+						startTime = floorStartTime;
+						lastFloor = floor;
+						firstFlag=false;
+					}
+					JSONObject obj = new JSONObject();
+					obj.put("x", newPos[0]);
+					obj.put("y", newPos[1]);
+					obj.put("time", time);
+					obj.put("floor", floor);
+					//oneTrack.put(obj);
+				//	System.out.println("obj:"+obj.toString());
+					/**
+					 * 定位轨迹按楼层分组
+					 */
+					 if (!floor.equals(lastFloor)) {
+						 arr.put(oneTrack);
+						 oneTrack = new JSONArray();
+						 oneTrack.put(obj);
+						 JSONObject jsonObject=new JSONObject();
+						 timeDuration = floorEndTime-floorStartTime;
+						 if (timeDuration == 0) {
+							 timeDuration += 1000;
+						 }
+						 allTimeDuration += timeDuration;
+						 jsonObject.put("floor", lastFloor);
+						 jsonObject.put("timeDuration",timeDuration);
+						 jsonObject.put("floorEndTime", floorEndTime);
+						 jsonObject.put("floorStartTime", floorStartTime+1000);
+						 floorTime.put(jsonObject);
+						 floorStartTime=floorEndTime;
+					 } else {
+						 /*
+						 obj = new JSONObject();
+						 obj.put("x", newPos[0]);
+						 obj.put("y", newPos[1]);
+						 obj.put("time", time);
+						 obj.put("floor", floor);
+						 */
+						 oneTrack.put(obj);
+					 }
+					 floorEndTime=time;
+					 lastFloor = floor;
+				}
+		//		System.out.println("floorEndTime"+floorEndTime);
+				rs.close();
+				pstmt.close();
+                if (flagNull == true) {
+                 JSONObject jsonObject=new JSONObject();
+   				 jsonObject.put("floor", lastFloor);
+   				 jsonObject.put("floorEndTime", floorEndTime);
+   				 jsonObject.put("floorStartTime", floorStartTime+1000);
+   				 timeDuration = floorEndTime-floorStartTime;
+   				 if (timeDuration == 0) {
+   					 timeDuration += 1000;
+   				}
+   				 allTimeDuration += timeDuration ;
+   				 jsonObject.put("timeDuration",timeDuration);
+   			     floorTime.put(jsonObject);
+   				if (oneTrack.length() > 0)
+   					arr.put(oneTrack);
+   			}
+				}
+//			System.out.println("floorTime"+floorTime);
+			dbConn.close();
+			if (arr.length() > 0) {
+                long w =0;
+                double ww = 0;
+                JSONArray  time = new JSONArray();
+				for(int i = 0;i< floorTime.length();i++){
+	                JSONObject width = new JSONObject();
+					JSONObject jOb = floorTime.getJSONObject(i);
+			//		System.out.println("job"+jOb.toString());
+					width.put("floor", jOb.get("floor"));
+					width.put("floorEndTime", jOb.get("floorEndTime"));
+					width.put("floorStartTime", jOb.get("floorStartTime"));
+					w = jOb.getLong("timeDuration");
+					ww = w*100.0/(endTime - startTime)+308.0;
+					if (ww < 308.0) {
+						ww = 308.0 ;
+					}
+					//width.put("width", w*100.0/(endTime - startTime));
+					width.put("width", ww);
+					time.put(width);
+				}
+         //       System.out.println("time"+time.toString());
+				result.put("timeQueryStart", timeTail);
+				result.put("timeQueryEnd", timeNow);
+				result.put("endTime", endTime);
+				result.put("startTime", startTime);
+				result.put("status", Status.STATUS_SUCCESS);
+				result.put("data", arr);
+				result.put("floorOrder", time);
+			//	result.put("allTimeDuration", allTimeDuration);
+	        //   System.out.println("result:"+result);
+				if (Configs.CACHE_ENABLE) {
+					String key = action + "_" + building + "_" +  mac + "_" + timeTail + "_" + timeNow;
 					Jedis redis = new Jedis(Configs.REDIS_HOST, Configs.REDIS_PORT);
 					redis.select(Configs.REDIS_DB_INDEX);
 					redis.set(key, arr.toString());
@@ -326,7 +552,7 @@ public class TrackServiceImpl implements TrackService {
 			dbConn = DBUtil.getConnection();
 			// 确定查询的表名
 			String table = "track_" + sdfDate.format(new Date(endTime));
-			String sqlStr = "select corx,cory from " + table + " where building=? and floor=? and mac=? and time between ? and ? order by time asc";
+			String sqlStr = "select corx,cory from `" + table + "` where building=? and floor=? and mac=? and time between ? and ? limit 20 order by time asc";
 			pstmt = dbConn.prepareStatement(sqlStr);
 			pstmt.setString(1, building);
 			pstmt.setString(2, floor);
@@ -417,7 +643,7 @@ public class TrackServiceImpl implements TrackService {
 			List<String> tableList = Function.parseTablenameList(dbConn, "track_" + building + "_", timeNow, timeTail);
 			JSONArray arr = new JSONArray();
 			for (String table : tableList) {
-				String sqlStr = "select mac,corx,cory,time from " + table + " where floor=? and time between ? and ? order by time asc";
+				String sqlStr = "select mac,corx,cory,time from `" + table + "` where floor=? and time between ? and ? order by time asc";
 				pstmt = dbConn.prepareStatement(sqlStr);
 				// pstmt.setString(1, building);
 				pstmt.setString(1, floor);
@@ -440,8 +666,9 @@ public class TrackServiceImpl implements TrackService {
 						posMap = new HashMap<>();
 					}
 					JSONObject obj = new JSONObject();
-					obj.put("x", rs.getInt(2));
-					obj.put("y", rs.getInt(3));
+					double[] newPos = PositionConvertUtil.convert(building, rs.getDouble(2), rs.getDouble(3));
+					obj.put("x", newPos[0]);
+					obj.put("y", newPos[1]);
 
 					if (time - timeStart > stepSize * 1000L) {
 						for (String key : countMap.keySet()) {
@@ -519,8 +746,8 @@ public class TrackServiceImpl implements TrackService {
 			List<String> tableList = Function.parseTablenameList(dbConn, "track_" + building + "_", timeNow, timeTail);
 			JSONArray arr = new JSONArray();
 			for (String table : tableList) {
-				String sqlStr = "select mac,corx,cory,time from " + table
-						+ " where building=? and floor=? and time between ? and ? order by time asc";
+				String sqlStr = "select mac,corx,cory,time from `" + table
+						+ "` where building=? and floor=? and time between ? and ? order by time asc";
 				pstmt = dbConn.prepareStatement(sqlStr);
 				pstmt.setString(1, building);
 				pstmt.setString(2, floor);
@@ -539,8 +766,8 @@ public class TrackServiceImpl implements TrackService {
 						arrGroup = new JSONArray();
 						countMap = new HashMap<>();
 					}
-					int x = (int) rs.getInt(2);
-					int y = (int) rs.getInt(3);
+					int x = rs.getInt(2);
+					int y = rs.getInt(3);
 					x = x / Configs.MAP_GRID_SIZE * Configs.MAP_GRID_SIZE;
 					y = y / Configs.MAP_GRID_SIZE * Configs.MAP_GRID_SIZE;
 					String keyStr = x + "_" + y;
@@ -549,8 +776,8 @@ public class TrackServiceImpl implements TrackService {
 						for (String key : countMap.keySet()) {
 							String[] tmpArr = key.split("_");
 							JSONObject obj = new JSONObject();
-							obj.put("x", Integer.parseInt(tmpArr[0]));
-							obj.put("y", Integer.parseInt(tmpArr[1]));
+							obj.put("x", Double.parseDouble(tmpArr[0]));
+							obj.put("y", Double.parseDouble(tmpArr[1]));
 							obj.put("value", countMap.get(key));
 							arrGroup.put(obj);
 						}
@@ -571,12 +798,12 @@ public class TrackServiceImpl implements TrackService {
 				for (String key : countMap.keySet()) {
 					String[] tmpArr = key.split("_");
 					JSONObject obj = new JSONObject();
-					obj.put("x", Integer.parseInt(tmpArr[0]));
-					obj.put("y", Integer.parseInt(tmpArr[1]));
+					obj.put("x", Double.parseDouble(tmpArr[0]));
+					obj.put("y", Double.parseDouble(tmpArr[1]));
 					obj.put("value", countMap.get(key));
 					arrGroup.put(obj);
 				}
-//				System.out.println(arrGroup.length());
+				System.out.println(arrGroup.length());
 				JSONObject tmp = new JSONObject();
 				tmp.put("data", arrGroup);
 				tmp.put("time", time);
@@ -602,10 +829,10 @@ public class TrackServiceImpl implements TrackService {
 		}
 	}
 
-//	 获取TOPKmac
- 	public void getTopKMAC(HttpServletRequest request, JSONObject result) {
- 		try {
- 			String data = request.getParameter("data");
+	// 获取TOPKmac
+	public void getTopKMAC(HttpServletRequest request, JSONObject result) {
+		try {
+			String data = request.getParameter("data");
 			if (data == null || data.equals("")) {
 				result.put("status", Status.STATUS_FORM_ERROR);
 				result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR));
@@ -654,36 +881,71 @@ public class TrackServiceImpl implements TrackService {
 		} finally {
 			DBUtil.release(rs, pstmt, dbConn);
 		}
- 		
- 	}
- 
+	}
 
-	public void getRealtimeTopKMAC(HttpServletRequest request, JSONObject result) {
+	public void getMapPath(HttpServletRequest request, JSONObject result) {
 		try {
-			Jedis redis = new Jedis(Configs.REDIS_HOST, Configs.REDIS_PORT);
-			redis.select(Configs.REDIS_DB_INDEX);
-			String redisKey = "mac_topk_sortset";
-			tuples = redis.zrevrangeWithScores(redisKey, 0, 99);
-			redis.close();
-//			System.out.println(tuples);
-			JSONArray arr = new JSONArray();
-			if (tuples != null && tuples.size() > 0) {
-				Iterator<Tuple> it = tuples.iterator();
-				Tuple tuple = null;
-				String mac = null;
-				int macCount = 0;
-				while (it.hasNext()) {
-					tuple = it.next();
-					mac = tuple.getElement();
-					macCount = (int) tuple.getScore();
-//					System.out.println("mac: " + mac + "      macCount: " + macCount);
-					arr.put(mac);
-				}
-//				System.out.println(arr);
+			String data = request.getParameter("data");
+			if (data == null || data.equals("")) {
+				result.put("status", Status.STATUS_FORM_ERROR);
+				result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR));
+				Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR));
+				return;
 			}
-			if (arr.length() > 0) {
+			JSONObject json = new JSONObject(data);
+			String building = json.getString("building");
+			if (building == null || "".equals(building)) {
+				result.put("status", Status.STATUS_FORM_ERROR);
+				result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR));
+				Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR));
+				return;
+			}
+			dbConn = DBUtil.getConnection();
+			String sqlStr = "select floor,path_id,start_id,end_id,start_corx,start_cory,end_corx,end_cory from map_path where building=?";
+			pstmt = dbConn.prepareStatement(sqlStr);
+			pstmt.setString(1, building);
+			rs = pstmt.executeQuery();
+			// 按楼层拆分路径数据
+			Map<String, List<MapPath>> mapPaths = new HashMap<>();
+			// 按楼层拆分节点数据
+			Map<String, Map<String, Point>> mapNodes = new HashMap<>();
+			String floor = null;
+			List<MapPath> list = null;
+			Map<String, Point> map = null;
+			MapPath path = null;
+			int pathId,startId,endId;
+			double startX,startY,endX,endY;
+			while (rs.next()) {
+				floor = rs.getString(1);
+				list = mapPaths.get(floor);
+				map = mapNodes.get(floor);
+				if (list == null) {
+					list = new ArrayList<>();
+					mapPaths.put(floor, list);
+				}
+				if(map==null){
+					map = new HashMap<>();
+					mapNodes.put(floor, map);
+				}
+				pathId = rs.getInt(2);
+				startId = rs.getInt(3);
+				endId = rs.getInt(4);
+				startX = rs.getDouble(5);
+				startY = rs.getDouble(6);
+				endX = rs.getDouble(7);
+				endY = rs.getDouble(8);
+				path = new MapPath(pathId,startId,endId,startX,startY,endX,endY);
+				list.add(path);
+				map.put(Integer.toString(startId), new Point((float) startX, (float) startY));
+				map.put(Integer.toString(endId), new Point((float) endX, (float) endY));
+			}
+			dbConn.close();
+			if (mapPaths.size() > 0) {
 				result.put("status", Status.STATUS_SUCCESS);
-				result.put("data", arr);
+				result.put("mapPaths", JSON.toJSON(mapPaths));
+				result.put("mapNodes", JSON.toJSON(mapNodes));
+				System.out.println(JSON.toJSONString(mapPaths));
+				System.out.println(JSON.toJSONString(mapNodes));
 				Log.info(this.getClass(), Status.getMessage(Status.STATUS_SUCCESS));
 			} else {
 				result.put("status", Status.STATUS_EMPTY);
@@ -691,10 +953,83 @@ public class TrackServiceImpl implements TrackService {
 				Log.info(this.getClass(), Status.getMessage(Status.STATUS_EMPTY));
 			}
 		} catch (Exception e) {
-			result.put("status", Status.STATUS_FORM_ERROR);
-			result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR) + ":" + e.getMessage());
-			Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR) + ":" + e.getMessage());
+			result.put("status", Status.STATUS_SYSTEM_ERROR);
+			result.put("message", Status.getMessage(Status.STATUS_SYSTEM_ERROR) + "：" + e.getMessage());
+			Log.trace(this.getClass(), e);
 			return;
+		} finally {
+			DBUtil.release(rs, pstmt, dbConn);
+		}
+	}
+
+	public void getForbiddenList(HttpServletRequest request, JSONObject result) {
+		try {
+			String data = request.getParameter("data");
+			if (data == null || data.equals("")) {
+				result.put("status", Status.STATUS_FORM_ERROR);
+				result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR));
+				Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR));
+				return;
+			}
+			JSONObject json = new JSONObject(data);
+			String building = json.getString("building");
+			if (building == null || "".equals(building)) {
+				result.put("status", Status.STATUS_FORM_ERROR);
+				result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR));
+				Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR));
+				return;
+			}
+			dbConn = DBUtil.getConnection();
+			String sqlStr = "select id,floor,description,path from forbidden_list where building=?";
+			pstmt = dbConn.prepareStatement(sqlStr);
+			pstmt.setString(1, building);
+			rs = pstmt.executeQuery();
+			// 按楼层拆分禁止区域数据
+			Map<String, List<ForbiddenRegion>> mapRegions = new HashMap<>();
+			String floor = null;
+			List<ForbiddenRegion> list = null;
+			int regionId;
+			String pathStr = null;
+			String desc = null;
+			while (rs.next()) {
+				regionId = rs.getInt(1);
+				floor = rs.getString(2);
+				desc = rs.getString(3);
+				pathStr = rs.getString(4);
+				String[] arr = pathStr.split("#");
+				List<Point> points = new ArrayList<>();
+				for (int i = 0; i < arr.length; i++) {
+					String[] pointStr = arr[i].split(",");
+					if (pointStr.length == 2) {
+						points.add(new Point(Float.parseFloat(pointStr[0]), Float.parseFloat(pointStr[1])));
+					}
+				}
+				list = mapRegions.get(floor);
+				if (list == null) {
+					list = new ArrayList<>();
+					mapRegions.put(floor, list);
+				}
+				if (points.size() > 0)
+					list.add(new ForbiddenRegion(regionId, points, desc));
+			}
+			dbConn.close();
+			if (mapRegions.size() > 0) {
+				result.put("status", Status.STATUS_SUCCESS);
+				result.put("mapRegions", JSON.toJSON(mapRegions));
+				System.out.println(JSON.toJSONString(mapRegions));
+				Log.info(this.getClass(), Status.getMessage(Status.STATUS_SUCCESS));
+			} else {
+				result.put("status", Status.STATUS_EMPTY);
+				result.put("message", Status.getMessage(Status.STATUS_EMPTY));
+				Log.info(this.getClass(), Status.getMessage(Status.STATUS_EMPTY));
+			}
+		} catch (Exception e) {
+			result.put("status", Status.STATUS_SYSTEM_ERROR);
+			result.put("message", Status.getMessage(Status.STATUS_SYSTEM_ERROR) + "：" + e.getMessage());
+			Log.trace(this.getClass(), e);
+			return;
+		} finally {
+			DBUtil.release(rs, pstmt, dbConn);
 		}
 	}
 }

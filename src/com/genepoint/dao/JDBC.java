@@ -13,11 +13,11 @@ import java.sql.Statement;
  *
  */
 public class JDBC {
-	String driver	= "com.mysql.jdbc.Driver";
-	String url = "jdbc:mysql://localhost:3306/zhongguancun_lbs?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true";
-	String user	= "root";
-	String pwd = "wifibeijing";
-	int count;
+	String		driver	= "com.mysql.jdbc.Driver";
+	String url = "jdbc:mysql://localhost:3306/huina_lbs?useUnicode=true&characterEncoding=utf8&rewriteBatchedStatements=true";
+	String		user	= "root";
+	String pwd = "zhongke";
+	int			count;
 	Connection	conn;
 	Statement	state;
 	ResultSet	rs;
@@ -141,7 +141,7 @@ public class JDBC {
 					while (i-- > 0) {
 						JDBC db = new JDBC();
 						db.connect();
-						ResultSet rs = db.executeQuery("select corx,cory from track_20161114 where floor='F1' limit 500000");
+						ResultSet rs = db.executeQuery("select corx,cory from track_20160808 where floor='F1' limit 500000");
 						while (rs.next()) {
 
 						}

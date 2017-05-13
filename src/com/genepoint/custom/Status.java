@@ -5,7 +5,7 @@ import java.util.Map;
 
 /**
  * 系统业务处理的状态信息
- * 
+ *
  * @author jd
  *
  */

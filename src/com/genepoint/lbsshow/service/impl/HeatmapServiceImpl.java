@@ -15,8 +15,6 @@ import javax.servlet.http.HttpServletRequest;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
-import redis.clients.jedis.Jedis;
-
 import com.genepoint.custom.Action;
 import com.genepoint.custom.Configs;
 import com.genepoint.custom.Status;
@@ -24,6 +22,11 @@ import com.genepoint.dao.DBUtil;
 import com.genepoint.lbsshow.service.HeatmapService;
 import com.genepoint.tool.Function;
 import com.genepoint.tool.Log;
+import com.genepoint.tool.PositionConvertUtil;
+
+import redis.clients.jedis.Jedis;
+import redis.clients.jedis.Pipeline;
+import redis.clients.jedis.Response;
 
 public class HeatmapServiceImpl implements HeatmapService {
 	private Connection dbConn = null;
@@ -37,7 +40,7 @@ public class HeatmapServiceImpl implements HeatmapService {
 		case Action.ACTION_GET_HEATMAP_REALTIME:
 			getRealtimeData(request, result);
 			break;
-		case Action.ACTION_GET_HEATMAP_HISTORY://历史热力图
+		case Action.ACTION_GET_HEATMAP_HISTORY:
 			getHistoryDataV2(request, result);
 			break;
 		default:
@@ -48,11 +51,6 @@ public class HeatmapServiceImpl implements HeatmapService {
 		}
 	}
 
-	/**
-	 * 从redis取实时定位结果
-	 * @param request
-	 * @param result
-	 */
 	public void getRealtimeData(HttpServletRequest request, JSONObject result) {
 		try {
 			String data = request.getParameter("data");
@@ -62,16 +60,30 @@ public class HeatmapServiceImpl implements HeatmapService {
 			Jedis redis = new Jedis(Configs.REDIS_HOST, Configs.REDIS_PORT);
 			redis.select(Configs.REDIS_DB_INDEX);
 			Map<String, String> users = redis.hgetAll(building + "_user_hashset");
-			JSONArray arr = new JSONArray();
+
+			Pipeline pipeline = redis.pipelined();
+			List<Response<String>> posList = new ArrayList<>();
 			for (String user : users.keySet()) {
-				String pos = redis.lindex(building + "_" + user, 0);
-				if (pos != null) {
-					JSONObject obj = new JSONObject(pos);
-					if (obj.getString("building").equals(building) && obj.getString("floor").equals(floor))
-						arr.put(obj);
+				posList.add(pipeline.get(building + "_" + user));
+			}
+			pipeline.sync();
+			redis.close();
+			JSONObject obj = null;
+			JSONArray arr = new JSONArray();
+			for (Response<String> r : posList) {
+				if (r == null)
+					continue;
+				String pos = r.get();
+				if (pos == null)
+					continue;
+				obj = new JSONObject(pos);
+				if (obj.getString("building").equals(building) && obj.getString("floor").equals(floor)) {
+					double[] newPos = PositionConvertUtil.convert(building, obj.getDouble("corx"), obj.getDouble("cory"));
+					obj.put("corx", newPos[0]);
+					obj.put("cory", newPos[1]);
+					arr.put(obj);
 				}
 			}
-			redis.close();
 			if (arr.length() > 0) {
 				result.put("status", Status.STATUS_SUCCESS);
 				result.put("data", arr);
@@ -84,7 +96,8 @@ public class HeatmapServiceImpl implements HeatmapService {
 		} catch (Exception e) {
 			result.put("status", Status.STATUS_FORM_ERROR);
 			result.put("message", Status.getMessage(Status.STATUS_FORM_ERROR) + ":" + e.getMessage());
-			Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR) + ":" + e.getMessage());
+			// Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR) + ":" + e.getMessage());
+			Log.trace(this.getClass(), e);
 			return;
 		}
 	}
@@ -130,14 +143,12 @@ public class HeatmapServiceImpl implements HeatmapService {
 			List<String> tableList = Function.parseTablenameList(dbConn, "track_" + building + "_", timeNow, timeTail);
 			HashMap<String, Integer> hashMap = new HashMap<String, Integer>(100 * 100);
 			for (String table : tableList) {
-				String sqlStr = "select bd09_x,bd09_y from " + table + " where floor=? and time between ? and ?";
+				String sqlStr = "select corx,cory from `" + table + "` where floor=? and time between ? and ?";
 				pstmt = dbConn.prepareStatement(sqlStr);
 				pstmt.setString(1, floor);
 				pstmt.setLong(2, timeTail);
 				pstmt.setLong(3, timeNow);
-//				System.out.println("start to query");
 				rs = pstmt.executeQuery();
-//				System.out.println("start to fetch cursor");
 				while (rs.next()) {
 					int x = (int) rs.getDouble(1);
 					int y = (int) rs.getDouble(2);
@@ -150,8 +161,6 @@ public class HeatmapServiceImpl implements HeatmapService {
 						hashMap.put(keyStr, 1);
 					}
 				}
-//				System.out.println("size:" + hashMap.size());
-//				System.out.println("fetch finish");
 				rs.close();
 				pstmt.close();
 			}
@@ -250,19 +259,17 @@ public class HeatmapServiceImpl implements HeatmapService {
 			List<String> tableList = Function.parseTablenameList(dbConn, "heatmap_by_minutes_", timeNow, timeTail);
 			HashMap<String, Integer> hashMap = new HashMap<String, Integer>(100 * 100);
 			for (String table : tableList) {
-				String sqlStr = "select xy,sum(value) as value from " + table + " where floor=? and time_start >= ? and time_end<=? group by xy";
+				String sqlStr = "select xy,sum(value) as value from `" + table
+						+ "` where building=? and floor=? and time_start >= ? and time_end<=? group by xy";
 				pstmt = dbConn.prepareStatement(sqlStr);
-				pstmt.setString(1, floor);
-				pstmt.setLong(2, timeTail);
-				pstmt.setLong(3, timeNow);
-//				System.out.println("start to query");
+				pstmt.setString(1, building);
+				pstmt.setString(2, floor);
+				pstmt.setLong(3, timeTail);
+				pstmt.setLong(4, timeNow);
 				rs = pstmt.executeQuery();
-//				System.out.println("start to fetch cursor");
 				while (rs.next()) {
 					hashMap.put(rs.getString(1), rs.getInt(2));
 				}
-//				System.out.println("size:" + hashMap.size());
-//				System.out.println("fetch finish");
 				rs.close();
 				pstmt.close();
 			}
@@ -283,8 +290,9 @@ public class HeatmapServiceImpl implements HeatmapService {
 				String[] xyStr = sortList.get(i).getKey().split("_");
 				int value = sortList.get(i).getValue();
 				JSONObject obj = new JSONObject();
-				obj.put("x", Double.parseDouble(xyStr[0]));
-				obj.put("y", Double.parseDouble(xyStr[1]));
+				double[] newPos = PositionConvertUtil.convert(building, Double.parseDouble(xyStr[0]), Double.parseDouble(xyStr[1]));
+				obj.put("x", newPos[0]);
+				obj.put("y", newPos[1]);
 				obj.put("value", value);
 				arr.put(obj);
 				// System.out.println(xyStr[0] + "\t" + xyStr[1] + "\t" + value);

@@ -27,17 +27,17 @@ import com.genepoint.custom.Configs;
 
 public class Function {
 	public static SimpleDateFormat dateFormat;
-	
+
 	static{
 		dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	}
-	
+
 	public static void printMessage(String msg){
 		if (Configs.DEBUG) {
 			System.out.println(msg);
 		}
 	}
-	
+
 	public static String readJSONString(HttpServletRequest request) {
 		StringBuffer sb = new StringBuffer();
 		String line = null;
@@ -50,14 +50,14 @@ public class Function {
 		} catch (Exception e) {
 			System.out.println(e.toString());
 		}
-		
+
 		return sb.toString();
 	}
-	
+
 	public static void responseString(HttpServletResponse response,String info) {
 		response.setContentType("text/html");
 		response.setCharacterEncoding("UTF-8");
-		
+
 		PrintWriter out = null;
 		try {
 			out = response.getWriter();
@@ -68,7 +68,7 @@ public class Function {
 			e1.printStackTrace();
 		}
 	}
-	
+
 	/**
 	 * 清除该目录下的所有文件，包括删除该文件夹
 	 */
@@ -91,11 +91,11 @@ public class Function {
 			dirFile.delete();
 		}
 	}
-	
+
 	public static String generateToken(){
 		return UUID.randomUUID().toString().replaceAll("-", "");
 	}
-	
+
 	public static String Md5(String plainText) {
 		try {
 			MessageDigest md = MessageDigest.getInstance("MD5");
@@ -117,7 +117,7 @@ public class Function {
 		}
 		return "";
 	}
-	
+
 	/**
 	 * 以当前毫秒时间戳的十六进制大写形式作为建筑编码
 	 * @return
@@ -126,10 +126,10 @@ public class Function {
 		long time = System.currentTimeMillis();
 		return Long.toHexString(time).toUpperCase();
 	}
-	
+
 	public static String getRandomSalt() { //length表示生成字符串的长度
-	    String base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=~`,.<>/?;:'";   
-	    Random random = new Random(System.currentTimeMillis());   
+	    String base = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*()_+-=~`,.<>/?;:'";
+	    Random random = new Random(System.currentTimeMillis());
 	    StringBuffer sb = new StringBuffer();
 	    Set<Integer> set = new HashSet<Integer>();
 	    while(true){
@@ -143,9 +143,9 @@ public class Function {
 	    	}
 	    }
 	    set = null;
-	    return sb.toString();   
-	 } 
-	
+	    return sb.toString();
+	 }
+
 	public static String parseURI(String uri) {
 		if (uri == null || uri.equals(""))
 			return "";
@@ -156,6 +156,7 @@ public class Function {
 	// 判断时间跨度为几天（确定查询的表名）
 	public static List<String> parseTablenameList(Connection dbConn, String tablePrefix, long timeNow, long timeTail) throws SQLException {
 		ResultSet rs = null;
+//		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 		SimpleDateFormat sdf = new SimpleDateFormat("yyyyMMdd");
 		List<String> tableList = new ArrayList<String>();
 		Date date = new Date(timeNow);

@@ -18,8 +18,6 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
-import redis.clients.jedis.Jedis;
-
 import com.genepoint.custom.Action;
 import com.genepoint.custom.Configs;
 import com.genepoint.custom.Status;
@@ -28,6 +26,8 @@ import com.genepoint.dao.JDBC;
 import com.genepoint.lbsshow.service.ShopService;
 import com.genepoint.tool.Function;
 import com.genepoint.tool.Log;
+
+import redis.clients.jedis.Jedis;
 
 public class ShopServiceImpl implements ShopService {
 	public static Map<Integer, ShopInfo> shopMap = new HashMap<>();
@@ -137,7 +137,7 @@ public class ShopServiceImpl implements ShopService {
 			List<String> tableList = Function.parseTablenameList(dbConn, "track_inshop_", timeNow, timeTail);
 			List<ShopBean> list = new ArrayList<>();
 			for (String table : tableList) {
-//				System.out.println(table);
+				System.out.println(table);
 				int[] shopList = { 20005, 30029, 10039, 10022, 30005, 10007, 30006, 10005, 10002, 10011, 30004, 10028, 10012, 10020, 10036, 10009,
 						10035, 10021, 10040, 30009 };
 				for (Integer shopId : shopList) {
@@ -293,7 +293,7 @@ public class ShopServiceImpl implements ShopService {
 				List<String> tableList = Function.parseTablenameList(dbConn, "track_inshop_", timeNow, timeTail);
 				JSONArray arr = new JSONArray();
 				for (String table : tableList) {
-					String sql = "select mac,time from " + table + " where building=? and floor=? and shop_id=?";
+					String sql = "select mac,time from `" + table + "` where building=? and floor=? and shop_id=?";
 					pstmt = dbConn.prepareStatement(sql);
 					pstmt.setString(1, building);
 					pstmt.setString(2, floor);
@@ -432,7 +432,7 @@ public class ShopServiceImpl implements ShopService {
 			if (dbConn != null) {
 				List<String> tableList = Function.parseTablenameList(dbConn, "track_inshop_", timeNow, timeTail);
 				for (String table : tableList) {
-					String sql = "select mac,time from " + table + " where floor=? and shop_id=?";
+					String sql = "select mac,time from `" + table + "` where floor=? and shop_id=?";
 					pstmt = dbConn.prepareStatement(sql);
 					// pstmt.setString(1, building);
 					pstmt.setString(1, floor);

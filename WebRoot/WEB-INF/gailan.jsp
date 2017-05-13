@@ -9,7 +9,7 @@
   <div class="admin-content" style="min-height:800px;height:800px;">
     <div class="am-cf am-padding" style="height:800px;overflow:auto">
         <div class="am-panel am-panel-default">
-          <div class="am-panel-hd am-cf" data-am-collapse="{target: '#collapse-panel-1'}">历史人流走势<span class="am-icon-chevron-down am-fr" ></span></div>
+          <div class="am-panel-hd am-cf" data-am-collapse="{target: '#collapse-panel-1'}">历史客流走势<span class="am-icon-chevron-down am-fr" ></span></div>
           <div class="am-panel-bd am-collapse am-in" id="collapse-panel-1">
           		<select class="select_duration">
 	  			 <option value="0">选择范围</option>
@@ -38,6 +38,7 @@ $(function(){
 	showHistoryFlowLine([]);
 	$('#btnSearchHistoryCustomerFlow').click(function(){
 		var data = {"building":building};
+		
 		if(!getQueryTimeDuration(this,data)){
 			return;
 		}

@@ -13,7 +13,7 @@
                 <configuration>
                   <source>1.8</source>
                   <target>1.8</target>
-				  <encoding>UTF-8</encoding>
+                  <encoding>UTF-8</encoding>
                 </configuration>
             </plugin>
 
@@ -26,7 +26,7 @@
                 <webappDirectory>${basedir}/WebRoot</webappDirectory>
                 <!-- <warSourceDirectory>${basedir}/src/main/webapp</warSourceDirectory> -->
 
-                            
+                <!--             
                 <webResources>
                     <resource>
                         <directory>${project.basedir}/WebRoot/WEB-INF/lib</directory>
@@ -37,32 +37,9 @@
                         </includes>
                     </resource>
                 </webResources> 
-                
+                -->
                 </configuration>
-            </plugin>
-
-            <plugin>  
-                <groupId>org.apache.maven.plugins</groupId>  
-                <artifactId>maven-assembly-plugin</artifactId>  
-                <version>2.2</version>  
-                <executions>  
-                    <execution>  
-                        <id>make-assembly</id>  
-                        <phase>package</phase>  
-                        <goals>  
-                            <goal>single</goal>  
-                        </goals>  
-                        <configuration>  
-                            <appendAssemblyId>false</appendAssemblyId>  
-                            <descriptors>  
-                                <descriptor>${basedir}/static-zip.xml</descriptor>  
-                            </descriptors>  
-                        </configuration>  
-                    </execution>  
-                </executions>  
             </plugin>  
-
-
 
         </plugins>
     </build>
@@ -78,12 +55,6 @@
 
     <dependencies> 
 
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>ocs-sdk-modified</artifactId>
-            <version>1.0</version>
-        </dependency>
-
 
         <!-- https://mvnrepository.com/artifact/org.bouncycastle/bcprov-jdk15on -->
         <dependency>
@@ -92,18 +63,6 @@
             <version>1.45</version>
         </dependency>
             
-            <!-- https://mvnrepository.com/artifact/com.aliyun.oss/aliyun-sdk-oss -->
-        <dependency>
-            <groupId>com.aliyun.oss</groupId>
-            <artifactId>aliyun-sdk-oss</artifactId>
-            <version>2.0.5</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/org.apache.ant/ant -->
-        <dependency>
-            <groupId>org.apache.ant</groupId>
-            <artifactId>ant</artifactId>
-            <version>1.9.7</version>
-        </dependency>
         <!-- https://mvnrepository.com/artifact/commons-codec/commons-codec -->
         <dependency>
             <groupId>commons-codec</groupId>
@@ -142,13 +101,6 @@
             <version>1.2</version>
         </dependency>
 
-        <!-- https://mvnrepository.com/artifact/org.hamcrest/hamcrest-core -->
-        <dependency>
-            <groupId>org.hamcrest</groupId>
-            <artifactId>hamcrest-core</artifactId>
-            <version>1.1</version>
-        </dependency>
-
         <!-- https://mvnrepository.com/artifact/org.apache.httpcomponents/httpclient -->
         <dependency>
             <groupId>org.apache.httpcomponents</groupId>
@@ -162,12 +114,7 @@
             <artifactId>httpcore</artifactId>
             <version>4.4</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/javax.mail/javax.mail-api -->
-        <dependency>
-            <groupId>javax.mail</groupId>
-            <artifactId>javax.mail-api</artifactId>
-            <version>1.5.5</version>
-        </dependency>
+
         <!-- https://mvnrepository.com/artifact/jdom/jdom -->
         <dependency>
             <groupId>jdom</groupId>
@@ -204,12 +151,6 @@
             <artifactId>mysql-connector-java</artifactId>
             <version>5.1.35</version>
         </dependency>
-        <!-- https://mvnrepository.com/artifact/io.netty/netty -->
-        <dependency>
-            <groupId>io.netty</groupId>
-            <artifactId>netty</artifactId>
-            <version>3.10.4.Final</version>
-        </dependency>
 
         <!-- https://mvnrepository.com/artifact/javax.servlet/javax.servlet-api -->
         <dependency>
@@ -229,39 +170,12 @@
             <artifactId>tomcat-jdbc</artifactId>
             <version>8.0.32</version>
         </dependency>
-
-        <!-- https://mvnrepository.com/artifact/com.aliyun/aliyun-java-sdk-ocs -->
+        
         <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>aliyun-java-sdk-ocs</artifactId>
-            <version>2.0.0-rc1</version>
-        </dependency>
-
-        <!-- https://mvnrepository.com/artifact/de.idyl/winzipaes -->
-        <dependency>
-            <groupId>de.idyl</groupId>
-            <artifactId>winzipaes</artifactId>
-            <version>1.0.1</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.bladejava/blade-patchca -->
-        <dependency>
-            <groupId>com.bladejava</groupId>
-            <artifactId>blade-patchca</artifactId>
-            <version>1.0.3</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.aliyun/aliyun-java-sdk-core -->
-        <dependency>
-            <groupId>com.aliyun</groupId>
-            <artifactId>aliyun-java-sdk-core</artifactId>
-            <version>3.0.6</version>
-        </dependency>
-        <!-- https://mvnrepository.com/artifact/com.aliyun.mns/aliyun-sdk-mns -->
-        <dependency>
-            <groupId>com.aliyun.mns</groupId>
-            <artifactId>aliyun-sdk-mns</artifactId>
-            <version>1.1.6</version>
-        </dependency>
-
+		    <groupId>com.alibaba</groupId>
+		    <artifactId>fastjson</artifactId>
+		    <version>1.2.21</version>
+		</dependency>
 
     </dependencies> 
     

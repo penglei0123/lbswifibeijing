@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<title>dijkstra test!</title>
+<script src="script/common/algorithms.js"></script>
+</head>
+<body>
+<script>
+var path = [];
+path.push({pathS:1,pathE:2,pathLength:10,pathId:1});
+path.push({pathS:2,pathE:3,pathLength:8,pathId:2});
+path.push({pathS:3,pathE:4,pathLength:12,pathId:3});
+path.push({pathS:3,pathE:5,pathLength:6,pathId:4});
+path.push({pathS:5,pathE:6,pathLength:20,pathId:5});
+path.push({pathS:6,pathE:7,pathLength:12,pathId:6});
+path.push({pathS:5,pathE:8,pathLength:8,pathId:7});
+path.push({pathS:8,pathE:9,pathLength:8,pathId:8});
+path.push({pathS:8,pathE:10,pathLength:15,pathId:9});
+//path.push({pathS:6,pathE:10,pathLength:8,pathId:10});
+var nodeSize = 10;
+var matrix = new Array(nodeSize+1);
+for (var i = 1; i <= nodeSize; i++) {
+	matrix[i]=new Array(nodeSize+1);
+	for (var j = 1; j <= nodeSize; j++) {
+		matrix[i][j] = 0x7fffffff;
+	}
+}
+for (var i in path) {
+	matrix[path[i].pathS][path[i].pathE] = path[i].pathLength;
+	matrix[path[i].pathE][path[i].pathS] = path[i].pathLength;
+}
+var shortPath = new ShortestPath(matrix,nodeSize);
+var len = shortPath.evaluate(7,10);
+console.log(len);
+console.log(shortPath.getPathTrail(7,10));
+</script>
+</body>
+</html>

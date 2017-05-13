@@ -39,6 +39,10 @@ public class DBUtil {
         return pool;
     }
     
+	public static void destoryPool() {
+		pool.close();
+	}
+
     public static Connection getConnection() throws SQLException{
     	Connection con = null;
     	int retry = 3;

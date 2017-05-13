@@ -6,11 +6,19 @@
 	String basePath = request.getScheme() + "://"
 			+ request.getServerName() + ":" + request.getServerPort()
 			+ path + "/"+user+"/";
-	basePath = path + "/"+user+"/";			//因路由环路后加上，使用测试服务器跳转
+	if(user==null || "".equals(user)){
+		basePath = path + "/";
+	}else{
+		basePath = path + "/"+user+"/";
+	}
 	String title = (String)request.getSession().getAttribute("title");
 	String username = (String)request.getSession().getAttribute("username");
 	String webPage = (String)request.getAttribute("page");
-	String buildingName = (String)request.getAttribute("buildingChineseName");
+	String building = Global.buildingCode;
+	String buildingAlias = Global.buildingName;
+	if(building==null){
+		buildingAlias="N/A";
+	}
 %>
 <html lang="zh-CN" class="no-js">
 <head>
@@ -23,8 +31,8 @@ if(user.equals("wifibeijing")){
 	out.println("<title>子午快线</title>");
 }
 %>
-  <meta name="description" content="<%=buildingName%>LBS">
-  <meta name="keywords" content="<%=buildingName%>LBS">
+  <meta name="description" content="LBS">
+  <meta name="keywords" content="LBS">
   <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no">
   <meta name="renderer" content="webkit">
   <meta http-equiv="Cache-Control" content="no-siteapp" />
@@ -33,14 +41,16 @@ if(user.equals("wifibeijing")){
   <meta name="apple-mobile-web-app-title" content="Amaze UI" />
   <link rel="stylesheet" type="text/css" href="<%=basePath%>static/assets/css/amazeui.min.css"/>
   <link rel="stylesheet" type="text/css" href="<%=basePath%>static/assets/css/admin.css">
-  <script type="text/javascript" src="http://api.map.baidu.com/api?v=2.0&ak=4fmvIljU94Sicv8ehPl08vy4BLRNpGWZ"></script>
-  <script type="text/javascript" src="http://api.map.baidu.com/library/Heatmap/2.0/src/Heatmap_min.js"></script>
-  <script type="text/javascript" src="http://api.map.baidu.com/library/TextIconOverlay/1.2/src/TextIconOverlay_min.js"></script>
-   <script type="text/javascript" src="http://api.map.baidu.com/library/MarkerClusterer/1.2/src/MarkerClusterer_min.js"></script>
+  <!--  
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.2/css/bootstrap.min.css">
+<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/font-awesome/4.5.0/css/font-awesome.min.css">
+  <link rel="stylesheet" type="text/css" href="<%=basePath%>static/assets/css/progress.css">
+  -->
 	<script>
 	var basePath="<%=basePath%>";
 	var page = "<%=webPage%>";
-	var building = "<%=Configs.BUILDING%>";
-	var floorConfig = "<%=Configs.FLOOR_LIST%>"; 
+	var building = "<%=building%>";
+	var floorConfig = "<%=Global.floorList%>"; 
+	
 	</script>
 </head>

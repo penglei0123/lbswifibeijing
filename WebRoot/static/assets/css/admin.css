@@ -61,7 +61,7 @@ ul {
 
 .admin-content {
   width: auto;
-  overflow: hidden;
+  overflow-x: hidden;
   height: 100%;
   background: #fff;
 }
@@ -266,15 +266,15 @@ gallery.html css
 	height:700px;
 }
 
-#floormap{
-	/*background:url(../../map/wanjianglong_F3.jpg) no-repeat;
+/* #floormap{
+	background:url(../../map/wanjianglong_F3.jpg) no-repeat;
 	width:1200px;
 	height:1000px;
 	overflow:auto;
-	*/
+	
 	float:left;
 	overflow:auto;
-}
+} */
 .track_list{
 	opacity:0.7;
 	position:absolute;

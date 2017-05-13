@@ -13,6 +13,6 @@ function isPassword(str){
 }
 
 function isNumber(str){
-	var reg = /^[0-9]*$)/;
+	var reg = /^[0-9]*$/;
 	return reg.test(str);
 }

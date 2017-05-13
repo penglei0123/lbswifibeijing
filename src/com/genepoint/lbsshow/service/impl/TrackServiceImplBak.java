@@ -257,7 +257,7 @@ public class TrackServiceImplBak implements TrackService {
 				arr.put(obj);
 			}
 			dbConn.close();
-			// System.out.println(arr.toString());
+			System.out.println(arr.toString());
 			if (arr.length() > 0) {
 				result.put("status", Status.STATUS_SUCCESS);
 				result.put("data", arr);
@@ -397,7 +397,7 @@ public class TrackServiceImplBak implements TrackService {
 				Log.warn(this.getClass(), Status.getMessage(Status.STATUS_FORM_ERROR));
 				return;
 			}
-			// System.out.println(data);
+			System.out.println(data);
 			JSONObject json = new JSONObject(data);
 			String building = json.getString("building");
 			String floor = json.getString("floor");
@@ -532,7 +532,7 @@ public class TrackServiceImplBak implements TrackService {
 								arrGroup.put(posMap.get(key));
 							}
 						}
-						// System.out.println(arrGroup.length());
+						System.out.println(arrGroup.length());
 						JSONObject tmp = new JSONObject();
 						tmp.put("data", arrGroup);
 						tmp.put("time", time);
@@ -658,7 +658,7 @@ public class TrackServiceImplBak implements TrackService {
 					obj.put("value", countMap.get(key));
 					arrGroup.put(obj);
 				}
-				// System.out.println(arrGroup.length());
+				System.out.println(arrGroup.length());
 				JSONObject tmp = new JSONObject();
 				tmp.put("data", arrGroup);
 				tmp.put("time", time);

@@ -13,10 +13,11 @@ import javax.servlet.annotation.WebListener;
 import org.apache.log4j.PropertyConfigurator;
 
 import com.genepoint.custom.Configs;
+import com.genepoint.dao.DBUtil;
 import com.genepoint.lbsshow.service.impl.HotPosition;
 import com.genepoint.lbsshow.service.impl.TrackServiceImpl;
-import com.genepoint.tool.LBSDataFaker;
 import com.genepoint.tool.Log;
+import com.genepoint.tool.PositionConvertUtil;
 
 /**
  * 监听器，在web容器启动/退出时被调用
@@ -33,22 +34,21 @@ public class AppContextListener implements ServletContextListener {
 		 * 配置Log4j
 		 */
 		String realPath = servletContextEvent.getServletContext().getRealPath("/");
-		PropertyConfigurator.configure(realPath + "/WEB-INF/log4j.properties");
+		PropertyConfigurator.configure(realPath + "/WEB-INF/conf/log4j.properties");
 		Log.info(this.getClass(), "Log4j init...");
 		// 加载配置文件
-		Configs.LoadConfiguration(realPath + "/WEB-INF/system.properties");
-
-		// 加载临时热点位置
-		String hotPosPath = realPath + "/WEB-INF/hotpos_data.txt";
+		Configs.LoadConfiguration(realPath + "/WEB-INF/conf/system.properties");
+		// 加载坐标转换插件
 		try {
-			loadHotPos(hotPosPath);
-		} catch (IOException e) {
+			PositionConvertUtil.loadConverters(realPath + "/WEB-INF/conf/converters.xml", realPath + "/WEB-INF/converter");
+		} catch (Exception e) {
 			Log.trace(this.getClass(), e);
 		}
 	}
 
 	public void contextDestroyed(ServletContextEvent servletContextEvent) {
-		LBSDataFaker.stopWork();
+		DBUtil.destoryPool();
+		// LBSDataFaker.stopWork();
 		// Log.info(this.getClass(), "LBSDataFaker stopped");
 	}
 
