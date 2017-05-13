@@ -64,7 +64,7 @@
 page="track_"+page;
 $(function(){
 	$("#"+page).attr("class","current");
-	getTopKMAC();
+	getTopKMAC({"building":building});
 	$('#btnSearchUserTrack').click(function() {
 		var macSelect = $('#select_user option:selected').val();
 		var macInput = $('#user-mac').val();

@@ -226,7 +226,7 @@ function getAllOfflineUsers(requestData) {
 }
 
 
-function getTopKMAC() {
+function getTopKMAC(requestData) {
     $.ajax({
         type: "GET",
         dataType: "json",
@@ -234,7 +234,7 @@ function getTopKMAC() {
         contentType: "application/x-www-form-urlencoded; charset=UTF-8",
         data: {
             "action": "get_topk_mac",
-             "building":"110111",
+            "data" : JSON.stringify(requestData)
         },
         success: function (result) {
             if (result.status !== 1) {
