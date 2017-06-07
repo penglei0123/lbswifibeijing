@@ -94,6 +94,7 @@ $(function(){
 		}
 		var shopId = $(this).siblings('.select_shops').children('option:selected').val();
 		var data = {'building':building,"floor":floor,"shopId":parseInt(shopId)};
+		console.log(data);
 		if(!getQueryTimeDuration(this,data)){
 			return;
 		}

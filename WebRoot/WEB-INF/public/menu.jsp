@@ -7,8 +7,8 @@
         <ul class="am-list am-collapse admin-sidebar-sub am-in" id="info-center">
           <li id="home"><a href="<%=basePath%>home"><span class="am-icon-home"></span> 客流总览</a></li>
           <li id="customer_realtime"><a href="<%=basePath%>customer/realtime"><span class="am-icon-area-chart"></span> 实时客流分布</a></li>
-           <li id="ap_realtime"><a href="<%=basePath%>ap/realtime"><span class="am-icon-database"></span> AP工作状态</a></li>
-        </ul>
+        <!--  <li id="ap_realtime"><a href="<%=basePath%>ap/realtime"><span class="am-icon-database"></span> AP工作状态</a></li> --> 
+         </ul>
       </li>
       <!--  
       <li class="admin-parent">
@@ -23,7 +23,7 @@
         <ul class="am-list am-collapse admin-sidebar-sub am-in" id="collapse-track">
           <li id="gailan"><a href="<%=basePath%>gailan"><span class="am-icon-area-chart"></span> 概览</a></li>
           <li id="heatmap_history"><a href="<%=basePath%>heatmap/history"><span class="am-icon-area-chart"></span> 热力图</a></li>
-          <li id="track_one"><a href="<%=basePath%>track/one"><span class="am-icon-database"></span> 单人轨迹</a></li>
+        <!--  <li id="track_one"><a href="<%=basePath%>track/one"><span class="am-icon-database"></span> 单人轨迹</a></li> -->
         </ul>
       </li>
       <li class="admin-parent">

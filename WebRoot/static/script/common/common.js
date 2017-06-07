@@ -31,7 +31,6 @@ $(function(){
 
 	// 解析生成楼层列表
 	generateFloorSelectItems();
-
 	$('#btnPlusMap').click(function(){
 		if (canvasScale < 5)
 			canvasScale += 0.2;
@@ -611,7 +610,6 @@ function getTopKMAC(requestData){
 }
 
 function getUserHistoryTrack(requestData){
-
 	$.ajax({
 		type : "GET",
 		dataType : "json",
@@ -634,7 +632,6 @@ function getUserHistoryTrack(requestData){
 				});
 			} else {
 				var data = result.data;
-			    console.log(result[0]);
 				var img = new Image();
 				img.src = basePath + "/static/map/" + requestData.building + "_"+requestData.floor + ".jpg";// 设置地图
 				if(img.complete){
@@ -777,16 +774,18 @@ function showHeatMapAndTrackData(requestData,trackData,img){
 
 //初始化轨迹画布,调用绘图方法
 function showTrackDataNoHeatmap(trackData,img,floor){
-   // alert("22222")
 	//加载地图
 	$('#floormap').html('');
-	$('#floormap').css("background","url("+img.src+") no-repeat");
-	$('#floormap').css("width",img.width);
-	$('#floormap').css("height",img.height);
-	
+	$('#floormap').css("background","url("+img.src+") no-repeat");		
+	$('#floormap').css("width",img.width* canvasScale);
+	$('#floormap').css("height",img.height* canvasScale);
+	//关键设置，不然图片不会等比例缩放
+	$("#floormap").css("background-size","contain");
 	$('#floormap').append('<canvas id="canvas" style="position: absolute; z-index: 999"></canvas>');
-	$('#canvas').attr("width",img.width-50);
-	$('#canvas').attr("height",img.height-50);
+	/*$('#canvas').attr("width",img.width* canvasScale-50);
+	$('#canvas').attr("height",img.height* canvasScale-50);*/
+	$('#canvas').attr("width",img.width* canvasScale);
+	$('#canvas').attr("height",img.height* canvasScale);
 	// 绘制完热力图背景后再绘点
 	var total = 0;
 	//点校正和路径补充（当有路径数据时）	
@@ -801,7 +800,7 @@ function showTrackDataNoHeatmap(trackData,img,floor){
 	var canvas = document.getElementById('canvas');
 	var context = canvas.getContext('2d');
 	// 先清除画布
-	context.clearRect(0, 0, img.width, img.height);// 清除整个画布
+	context.clearRect(0, 0, img.width* canvasScale, img.height* canvasScale);// 清除整个画布
 	resetDrawStatus();
 	/**
 	 * 延迟绘制（递归调用）
@@ -840,13 +839,13 @@ function drawTrack(groupData,groupIndex,img,context){
 			//突出起点
 			context.fillStyle="#76EE00";
 			context.beginPath();
-			context.arc(data[0].x, data[0].y, 10, 0,2 * Math.PI);
+			context.arc(data[0].x* canvasScale, data[0].y*canvasScale,10*canvasScale, 0,2 * Math.PI);
 			context.closePath();
 			context.fill();
 			//突出终点
 		    context.fillStyle="red";
 		    context.beginPath();
-		    context.arc(data[index-1].x, data[index-1].y, 10, 0,2 * Math.PI);
+		    context.arc(data[index-1].x * canvasScale, data[index-1].y* canvasScale,10*canvasScale, 0,2 * Math.PI);
 		    context.closePath();
 		    context.fill();
 		    
@@ -858,13 +857,13 @@ function drawTrack(groupData,groupIndex,img,context){
 			//突出起点
 			context.fillStyle="#76EE00";
 			context.beginPath();
-			context.arc(data[0].x, data[0].y, 10, 0,2 * Math.PI);
+			context.arc(data[0].x* canvasScale, data[0].y* canvasScale, 10 *canvasScale, 0,2 * Math.PI);
 			context.closePath();
 			context.fill();
 			//突出终点
 		    context.fillStyle="red";
 		    context.beginPath();
-		    context.arc(data[index-1].x, data[index-1].y, 10, 0,2 * Math.PI);
+		    context.arc(data[index-1].x* canvasScale, data[index-1].y* canvasScale, 10*canvasScale, 0,2 * Math.PI);
 		    context.closePath();
 		    context.fill();
 		    
@@ -882,7 +881,7 @@ function drawTrack(groupData,groupIndex,img,context){
 		}
 		//console.log(index);
 		if(index>0){
-			var line = new Line(data[index-1].x,data[index-1].y,data[index].x,data[index].y);
+			var line = new Line(data[index-1].x* canvasScale,data[index-1].y* canvasScale,data[index].x* canvasScale,data[index].y* canvasScale);
 			line.drawWithArrowheads(context);
 		}
 		index++;

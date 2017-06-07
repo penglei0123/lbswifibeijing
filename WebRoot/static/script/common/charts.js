@@ -36,6 +36,7 @@ function getRealtimeCustomerShopData(requestData){
 					html+='<td>'+shopRank[i].activeNum+'</td>';
 					html+='</tr>';
 					count++;
+					console.log(shopRank[i].name+shopRank[i].floor+shopRank[i].activeNum);
 				}
 				if(count==0){
 					html+='<td colspan=3><p align="center">No Available Data</p></td>';
@@ -113,7 +114,7 @@ function showRealtimeCustomerCount() {
 				name : '实时客流量'
 			} ],
 			min:0,
-			max:2500
+			max:5000
 		} ]
 	};
 	

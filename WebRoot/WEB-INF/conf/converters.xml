@@ -1,8 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <converters>
 	<converter>
-		<building>113617</building>
+		<building>1101476</building>
 		<class>com.genepoint.converter.TZConverter</class>
 		<description>通州国泰坐标转换插件</description>
+	</converter>
+		<converter>
+		<building>1102588</building>
+		<class>com.genepoint.converter.TZConverter</class>
+		<description>丰科坐标转换插件</description>
+	</converter>
+	<converter>
+		<building>1101197</building>
+		<class>com.genepoint.converter.TZConverter</class>
+		<description>欧亚万豪购物中心坐标转换插件</description>
 	</converter>
 </converters>

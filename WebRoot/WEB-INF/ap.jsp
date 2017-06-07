@@ -77,7 +77,7 @@
 					 clearInterval(realtimeHandle);
 					realtimeHandle = setInterval(function(){
 						getAllApPosition(requestData,mapWidth,mapHeight,imgMarker,mapScale);
-					}, 10000);
+					}, 5000);
 				}
 			}
 		

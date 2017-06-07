@@ -173,7 +173,7 @@ public class CustomerServiceImpl implements CustomerService {
 			for (int i = 0; i < maxShopSize; i++) {
 				int shopId = list.get(i).getKey();
 				int activeNum = list.get(i).getValue();
-				ShopInfo info = ShopServiceImpl.shopMap.get(shopId);
+				ShopInfo info = ShopServiceImpl.shopMap.get(building+"_"+shopId);
 				if (info != null) {
 					JSONObject shop = new JSONObject();
 					shop.put("name", info.shopName);

@@ -46,7 +46,7 @@
 	       </span>
 	       <button type="button" id="btnSearchUserTrack" class="am-btn am-btn-primary am-btn-xs"><span class="am-icon-search"></span>查询单楼层轨迹</button>
 	       <button type="button" id="btnStopDrawTrack" class="am-btn am-btn-primary am-btn-xs"><span class="am-icon-ban"></span> 停止绘制</button>
-  		   <button type="button" id="btnChangeFloor" class="am-btn am-btn-primary am-btn-xs"><span class="am-icon-ban">查询单人轨迹</span>
+  		   <button type="button" id="btnChangeFloor" class="am-btn am-btn-primary am-btn-xs"><span class="am-icon-ban">查询单人轨迹</span> 		  
   		</div>
   		<div class="ratings_bars">
 			<span id="title0">0</span>
@@ -55,18 +55,28 @@
 				<div></div>
 				<span id="btn0"></span>
 			</div>
-			<span class="bars_10">10</span>
+			<span class="bars_10">10</span>			
 		</div>
-		<div class="progress" style="width: 100%;float: left;">
+		<div id="floor_btn" style="display: none;">
+		<button type="button" id="btnTrackPlusMap" class="am-btn am-btn-primary am-btn-xs"><span class="am-icon-search-plus"></span> 放大</button>
+	    <button type="button" id="btnTrackMinusMap" class="am-btn am-btn-primary am-btn-xs"><span class="am-icon-search-minus"></span> 缩小</button>
+	    </div>
+		<div id="people_btn"  style="display: none;">
+		<button type="button" id="btnPeopleTrackPlusMap" class="am-btn am-btn-primary am-btn-xs"><span class="am-icon-search-plus"></span> 放大</button>
+	    <button type="button" id="btnPeopleTrackMinusMap" class="am-btn am-btn-primary am-btn-xs"><span class="am-icon-search-minus"></span> 缩小</button>
 		</div>
+		<div id="people_floor_btn"  style="display: none;">
+		<button type="button" id="btnPeopleFloorTrackPlusMap" class="am-btn am-btn-primary am-btn-xs"><span class="am-icon-search-plus"></span> 放大</button>
+	    <button type="button" id="btnPeopleFloorTrackMinusMap" class="am-btn am-btn-primary am-btn-xs"><span class="am-icon-search-minus"></span> 缩小</button>
+		</div>	  
+		<div class="progress" style="width: 100%;float: left;"></div>
 		</div>	  
         <hr>
         <div class="am-cf am-padding" style="height:700px;overflow:auto">
     	<div id="floormap" class="am-u-md-12" >
     		 <!--  <canvas id="canvas" >您的浏览器不支持canvas!</canvas>-->
 	    </div>
-	    <!--  
-	    <div class="track_list">
+	  <!--   <div class="track_list">
 		    <div class="am-panel am-panel-default">
 	          <div class="am-panel-hd am-cf" data-am-collapse="{target: '#track_list'}">用户轨迹分层列表<span class="am-icon-chevron-down am-fr" ></span></div>
 	          <div class="am-panel-bd am-collapse am-in" id="track_list">
@@ -74,8 +84,7 @@
 		    	</ul>
 	          </div>
 	        </div>
-	    </div>
-	    -->
+	    </div> -->	
     </div>
   </div>
   <!-- content end -->
@@ -90,16 +99,20 @@ var mapPaths = {};
 var mapNodes = {};//楼层区分
 var mapRegions = {};
 var abortDraw = false;
+var markFloor;
 //比较楼层
 var floorChar = '';
 var floorCssId = '';
-$(function(){
+$(function(){		
 	$("#"+page).attr("class","current");
 	getTopKMAC({"building":building});
 	//加载全局路径数据和禁止区域数据
 	getMapPathAndForbiddenRegionData({"building":building});
 	//查看单楼层轨迹
-	$('#btnSearchUserTrack').click(function() {
+	$('#btnSearchUserTrack').click(function(){
+		$('#floor_btn').css("display","block");
+		$('#people_btn').css("display","none");
+		$('#people_floor_btn').css("display","none");		
 		$('.progress').empty();
 		//终止当前绘制
 		stopDrawTrack();
@@ -144,17 +157,42 @@ $(function(){
 	$('#btnStopDrawTrack').click(function() {
 		stopDrawTrack();
 	});
-	
-	//点击楼层进度条回放该楼层轨迹
-	/*  $("div[id^='progress']").click(function(){
-		      alert('clicked div:',  $(this).attr("id"));
-		      stopDrawTrack();
-		      var id = $(this).attr("id");	      
-		   });  
-	 $(".progress").click(function(){
-		alert($(this).index())
-		})
-	*/
+});
+
+//查看轨迹时可以实现放大缩小
+$('#btnTrackPlusMap').click(function(){
+	if (canvasScale < 5)
+		canvasScale += 0.2;
+	$('#btnSearchUserTrack').click();
+});
+$('#btnTrackMinusMap').click(function(){
+	if (canvasScale > 0.2)
+		canvasScale -= 0.2;
+	$('#btnSearchUserTrack').click();
+});
+
+//查看单人轨迹时可以实现放大缩小
+$('#btnPeopleTrackPlusMap').click(function(){
+	if (canvasScale < 5)
+		canvasScale += 0.2;
+	$('#btnChangeFloor').click();
+});
+$('#btnPeopleTrackMinusMap').click(function(){
+	if (canvasScale > 0.2)
+		canvasScale -= 0.2;
+	$('#btnChangeFloor').click();
+});
+
+//查看单人轨迹中的单楼层时可以实现放大缩小
+$('#btnPeopleFloorTrackPlusMap').click(function(){
+	if (canvasScale < 5)
+		canvasScale += 0.2;
+	$('#'+markFloor).click();
+});
+$('#btnPeopleFloorTrackMinusMap').click(function(){
+	if (canvasScale > 0.2)
+		canvasScale -= 0.2;
+	$('#'+markFloor).click();
 });
 
 function stopDrawTrack(){
@@ -251,7 +289,11 @@ new scale('btn0', 'bar0', 'title0');
 	var DrawHandle;
     var div;
 	//自动切换楼层显示轨迹
-	$('#btnChangeFloor').click(function() {
+	$('#btnChangeFloor').click(function(){
+		$('#select_floor').val("0");
+		$('#people_btn').css("display","block");
+		$('#floor_btn').css("display","none");
+		$('#people_floor_btn').css("display","none");	
 		stopDrawTrack();
 		clearInterval(DrawHandle);
 		div = '';
@@ -285,7 +327,7 @@ new scale('btn0', 'bar0', 'title0');
 	});
 		
 	//查询单mac历史轨迹自动切换楼层
-	function getPersonHistoryTrack(requestData) {
+	function getPersonHistoryTrack(requestData){
 		$.ajax({
 			type : "GET",
 			dataType : "json",
@@ -319,6 +361,10 @@ new scale('btn0', 'bar0', 'title0');
 		var id='';		
 		for(var i in floorOrder){	
 			$('.'+floorOrder[i].floor+floorOrder[i].floorStartTime+floorOrder[i].floorEndTime).click(function(){
+			markFloor = $(this).attr('id');
+			$('#people_floor_btn').css("display","block");
+			$('#people_btn').css("display","none");
+			$('#floor_btn').css("display","none");			
 			stopDrawTrack();
 			clearInterval(DrawHandle);	
 			$('#'+floorCssId).css({"background":"rgb(249, 249, 249)","text-align":"center","box-shadow":"rgba(16, 162, 236, 0.01) 0px 0px 10px"});
@@ -356,7 +402,8 @@ new scale('btn0', 'bar0', 'title0');
 						showTrackDataNoHeatmap(backData,imgBack,backData[0][0].floor);//不带热力图背景的轨迹
 					}
 				}		       
-				})
+				
+			})
 		}				
 		timeQueryStart = result.timeQueryStart;
 		timeQueryEnd = result.timeQueryEnd;
@@ -394,25 +441,29 @@ new scale('btn0', 'bar0', 'title0');
 	function showDynamicFloorTrack(trackData, groupIndex ,img, floor,floorOrder) {
 		$('#floormap').html('');
 		$('#floormap').css("background", "url(" + img.src + ") no-repeat");
-		$('#floormap').css("width", img.width);
-		$('#floormap').css("height", img.height);
+		$('#floormap').css("width", img.width* canvasScale);
+		$('#floormap').css("height", img.height* canvasScale);
+		//关键设置，不然图片不会等比例缩放
+		$("#floormap").css("background-size","contain");
 	
 		$('#floormap').append('<canvas id="canvas" style="position: absolute; z-index: 999;"></canvas>');
-		$('#canvas').attr("width", img.width - 50);
-		$('#canvas').attr("height", img.height - 50);
+		/* $('#canvas').attr("width", img.width - 50);
+		$('#canvas').attr("height", img.height - 50); */
+		$('#canvas').attr("width", img.width* canvasScale);
+		$('#canvas').attr("height", img.height* canvasScale);
 		// 绘制完热力图背景后再绘点
 		var total = 0;
 		//点校正和路径补充（当有路径数据时）
 
 		if (mapPaths.hasOwnProperty(floor)) {
 			console.log("input length:" + trackData[groupIndex].length);
-			//trackData[i] = updateTrackPoints(trackData[i],floor);
-			//trackData[groupIndex] = updateTrackPointsWidthOriginPoints(trackData[groupIndex],floor);
+		    trackData[i] = updateTrackPoints(trackData[i],floor);
+			trackData[groupIndex] = updateTrackPointsWidthOriginPoints(trackData[groupIndex],floor);
 		}
 		var canvas = document.getElementById('canvas');
 		var context = canvas.getContext('2d');
 		// 先清除画布
-		context.clearRect(0, 0, img.width, img.height);// 清除整个画布
+		context.clearRect(0, 0, img.width* canvasScale, img.height* canvasScale);// 清除整个画布
 		resetDrawStatus();
 		/**
 		 * 延迟绘制（递归调用）
@@ -444,14 +495,13 @@ new scale('btn0', 'bar0', 'title0');
 				//突出起点
 				context.fillStyle = "#76EE00";
 				context.beginPath();
-				context.arc(data[0].x, data[0].y, 10, 0, 2 * Math.PI);
+				context.arc(data[0].x * canvasScale, data[0].y * canvasScale, 10*canvasScale, 0, 2 * Math.PI);
 				context.closePath();
 				context.fill();
 				//突出终点
 				context.fillStyle = "red";
 				context.beginPath();
-				context.arc(data[index - 1].x, data[index - 1].y, 10, 0,
-						2 * Math.PI);
+				context.arc(data[index - 1].x * canvasScale, data[index - 1].y * canvasScale, 10*canvasScale, 0,2 * Math.PI);
 				context.closePath();
 				context.fill();
 
@@ -463,13 +513,13 @@ new scale('btn0', 'bar0', 'title0');
 				//突出起点
 				context.fillStyle = "#76EE00";
 				context.beginPath();
-				context.arc(data[0].x, data[0].y, 10, 0, 2 * Math.PI);
+				context.arc(data[0].x * canvasScale, data[0].y * canvasScale, 10*canvasScale, 0, 2 * Math.PI);
 				context.closePath();
 				context.fill();
 				//突出终点
 				context.fillStyle = "red";
 				context.beginPath();
-				context.arc(data[index - 1].x, data[index - 1].y, 10, 0,
+				context.arc(data[index - 1].x * canvasScale, data[index - 1].y * canvasScale, 10*canvasScale, 0,
 						2 * Math.PI);
 				context.closePath();
 				context.fill();
@@ -486,8 +536,7 @@ new scale('btn0', 'bar0', 'title0');
 				return;
 			}
 			if (index > 0) {
-				var line = new Line(data[index - 1].x, data[index - 1].y,
-						data[index].x, data[index].y);
+				var line = new Line(data[index - 1].x * canvasScale, data[index - 1].y * canvasScale,data[index].x * canvasScale, data[index].y * canvasScale);
 				line.drawWithArrowheads(context);
 			}		
 			var progress = (data[index].time-startTime)*1.0/(endTime-startTime)*100;
